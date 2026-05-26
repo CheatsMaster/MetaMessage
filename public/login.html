@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Messenger | Вход и регистрация</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #0F0F0F 0%, #1A1A1A 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Анимированные фоновые элементы */
+        .bg-blur {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .bg-blur-1 {
+            background: #7C3AED;
+            top: -200px;
+            left: -200px;
+        }
+
+        .bg-blur-2 {
+            background: #3B82F6;
+            bottom: -200px;
+            right: -200px;
+        }
+
+        /* Контейнер */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        /* Карточка */
+        .card {
+            background: rgba(36, 36, 36, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 48px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Логотип */
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+        }
+
+        .logo-icon svg {
+            width: 36px;
+            height: 36px;
+            fill: white;
+        }
+
+        .logo h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo p {
+            color: #A1A1AA;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        /* Переключатель режимов */
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px;
+            border-radius: 60px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: #A1A1AA;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 60px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .tab.active {
+            background: #7C3AED;
+            color: white;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Формы */
+        .form {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .form.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Поля ввода */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #D1D5DB;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: #7C3AED;
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .input-wrapper input::placeholder {
+            color: #52525B;
+        }
+
+        /* Кнопки */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Сообщения */
+        .message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #FCA5A5;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6EE7B7;
+        }
+
+        /* Доп. ссылки */
+        .footer-text {
+            text-align: center;
+            margin-top: 24px;
+            color: #52525B;
+            font-size: 12px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 640px) {
+            .card {
+                padding: 32px 24px;
+            }
+            
+            .logo-icon {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .logo-icon svg {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .logo h1 {
+                font-size: 24px;
+            }
+            
+            .input-wrapper input {
+                padding: 12px 14px;
+                font-size: 16px;
+            }
+            
+            .btn {
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 28px 20px;
+            }
+            
+            .tabs {
+                margin-bottom: 24px;
+            }
+            
+            .tab {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blur bg-blur-1"></div>
+    <div class="bg-blur bg-blur-2"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                </div>
+                <h1>Messenger</h1>
+                <p>Общайся с удовольствием</p>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('login')">Вход</button>
+                <button class="tab" onclick="switchTab('register')">Регистрация</button>
+            </div>
+
+            <!-- Форма входа -->
+            <div id="loginForm" class="form active">
+                <form id="login" onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>📧 Email</label>
+                        <div class="input-wrapper">
+                            <input type="email" id="loginEmail" placeholder="ivan@example.com" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>🔒 Пароль</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="loginPassword" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Войти</button>
+                </form>
+            </div>
+
+            <!-- Форма регистрации -->
+            <div id="registerForm" class="form">
+                <form id="register" onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label>👤 Имя пользователя</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="regUsername" placeholder="alex_kuz" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>📧 Email</label>
+                        <div class="input-wrapper">
+                            <input type="email" id="regEmail" placeholder="alex@example.com" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>🔒 Пароль</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="regPassword" placeholder="минимум 6 символов" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Создать аккаунт</button>
+                </form>
+            </div>
+
+            <div id="message"></div>
+            <div class="footer-text">
+                🔐 Безопасное подключение
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        
+        function switchTab(tab) {
+            // Обновляем активную вкладку
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Показываем нужную форму
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (tab === 'login') {
+                loginForm.classList.add('active');
+                registerForm.classList.remove('active');
+            } else {
+                loginForm.classList.remove('active');
+                registerForm.classList.add('active');
+            }
+            
+            // Очищаем сообщения
+            document.getElementById('message').innerHTML = '';
+        }
+        
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                msgDiv.innerHTML = '';
+            }, 5000);
+        }
+        
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const btn = event.target.querySelector('.btn');
+            btn.classList.add('loading');
+            btn.textContent = 'Вход...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('✅ Успешный вход! Перенаправление...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showMessage(data.error || 'Ошибка входа', 'error');
+                }
+            } catch (error) {
+                showMessage('Ошибка соединения с сервером', 'error');
+            } finally {
+                btn.classList.remove('loading');
+                btn.textContent = 'Войти';
+            }
+        }
+        
+        async function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            if (password.length < 6) {
+                showMessage('Пароль должен быть минимум 6 символов', 'error');
+                return;
+            }
+            
+            const btn = event.target.querySelector('.btn');
+            btn.classList.add('loading');
+            btn.textContent = 'Регистрация...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, username })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('✅ Регистрация успешна! Теперь войдите', 'success');
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('loginEmail').value = email;
+                        document.getElementById('loginPassword').value = '';
+                    }, 2000);
+                } else {
+                    showMessage(data.error || 'Ошибка регистрации', 'error');
+                }
+            } catch (error) {
+                showMessage('Ошибка соединения с сервером', 'error');
+            } finally {
+                btn.classList.remove('loading');
+                btn.textContent = 'Создать аккаунт';
+            }
+        }
+        
+        // Проверяем, авторизован ли пользователь
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_URL}/api/auth/me`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Уже авторизован:', data.user);
+                    // Можно перенаправить на главную страницу чата
+                    // window.location.href = '/chat.html';
+                }
+            } catch (error) {
+                console.log('Не авторизован');
+            }
+        }
+        
+        // Запускаем проверку при загрузке
+        checkAuth();
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger | Главная</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0F0F0F, #1A1A1A);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .welcome-card {
+            background: rgba(36, 36, 36, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 48px;
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        p {
+            color: #A1A1AA;
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+        
+        .logout-btn {
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+        }
+        
+        .user-info {
+            background: rgba(0,0,0,0.3);
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-card">
+        <div class="user-info" id="userInfo">Загрузка...</div>
+        <h1>✨ Добро пожаловать в Messenger!</h1>
+        <p>Скоро здесь будет твой чат с друзьями<br>А пока — наслаждайся стильным интерфейсом</p>
+        <button class="logout-btn" onclick="logout()">Выйти</button>
+    </div>
+
+    <script>
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login.html';
+        }
+        
+        async function loadUser() {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('userInfo').innerHTML = `
+                        👋 Привет, ${data.profile?.username || data.user.email}!<br>
+                        <small style="color: #7C3AED;">${data.user.email}</small>
+                    `;
+                } else {
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                window.location.href = '/login.html';
+            }
+        }
+        
+        loadUser();
+    </script>
+</body>
+</html>
