@@ -115,22 +115,29 @@ window.goBackSettings = async () => {
 };
 
 window.saveProfileSettings = async () => {
+    const birthDate = document.getElementById('settingsBirthDate')?.value;
+    console.log('📅 Сохраняем дату рождения:', birthDate);
+    
     const data = {
         username: document.getElementById('settingsUsername')?.value,
         full_name: document.getElementById('settingsFullName')?.value,
         bio: document.getElementById('settingsBio')?.value,
-        birth_date: document.getElementById('settingsBirthDate')?.value
+        birth_date: birthDate || null
     };
+    
+    console.log('📤 Отправляем данные:', data);
     
     try {
         await usersAPI.updateProfile(data);
         const me = await authAPI.me();
+        console.log('✅ Получен обновленный профиль:', me);
         setState({ currentUser: me });
         showToast('✅ Профиль успешно обновлен!', 'success');
         await renderMyProfile(document.getElementById('myProfileContainer'));
         window.goBackSettings();
     } catch (error) {
-        showToast('❌ Ошибка сохранения', 'error');
+        console.error('❌ Ошибка сохранения:', error);
+        showToast('❌ Ошибка сохранения: ' + error.message, 'error');
     }
 };
 

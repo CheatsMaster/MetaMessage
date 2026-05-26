@@ -21,7 +21,7 @@ router.get('/:userId', authenticateToken, async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .select('id, username, full_name, avatar_url, bio, website, status, created_at')
+      .select('id, username, full_name, avatar_url, bio, website, status, created_at, birth_date')
       .eq('id', userId)
       .single();
     
@@ -40,16 +40,17 @@ router.get('/:userId', authenticateToken, async (req, res) => {
 
 // Обновить свой профиль
 router.put('/profile', authenticateToken, async (req, res) => {
-  const { username, full_name, bio, website, avatar_url } = req.body;
+  const { username, full_name, bio, website, avatar_url, birth_date } = req.body;
   const userId = req.user.id;
   
   try {
     const updates = {};
-    if (username) updates.username = username;
+    if (username !== undefined) updates.username = username;
     if (full_name !== undefined) updates.full_name = full_name;
     if (bio !== undefined) updates.bio = bio;
     if (website !== undefined) updates.website = website;
     if (avatar_url !== undefined) updates.avatar_url = avatar_url;
+    if (birth_date !== undefined) updates.birth_date = birth_date;
     updates.updated_at = new Date();
     
     const { data, error } = await supabaseAdmin
@@ -62,6 +63,7 @@ router.put('/profile', authenticateToken, async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
+    console.error('Ошибка обновления профиля:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -4,7 +4,6 @@ import { escapeHtml, formatDate, showToast } from '../utils.js';
 import { viewUserProfile } from './profile.js';
 
 let commentsOpen = {};
-let activeReplies = {};
 
 export async function renderFeed(container) {
     try {
@@ -27,7 +26,7 @@ export async function renderFeed(container) {
                 toggleComments(btn.dataset.postId);
             });
         });
-        container.querySelectorAll('.post-stat-likes-list').forEach(btn => {
+        container.querySelectorAll('.post-stat-likes').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 showLikesModal(btn.dataset.postId);
@@ -57,8 +56,8 @@ function renderPost(post) {
                 <div class="post-stat post-stat-comment" data-post-id="${post.id}">
                     💬 <span class="comments-count">${post.comments_count || 0}</span>
                 </div>
-                <div class="post-stat post-stat-likes-list" data-post-id="${post.id}" style="cursor: pointer;">
-                    👥 список
+                <div class="post-stat post-stat-likes" data-post-id="${post.id}" style="cursor: pointer; margin-left: auto;">
+                    👥
                 </div>
             </div>
             <div class="comments-section" id="comments-${post.id}" style="display: none;">
@@ -113,7 +112,6 @@ async function loadComments(postId) {
             container.innerHTML = comments.map(comment => renderComment(comment, postId)).join('');
         }
         
-        // Привязываем обработчики лайков комментариев
         container.querySelectorAll('.comment-like-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -154,7 +152,6 @@ function renderComment(comment, postId) {
 async function likeComment(commentId) {
     try {
         await postsAPI.likeComment(commentId);
-        // Обновляем отображение
         const btn = document.querySelector(`.comment-like-btn[data-comment-id="${commentId}"]`);
         if (btn) {
             const currentLikes = parseInt(btn.textContent.match(/\d+/)?.[0] || 0);
@@ -204,7 +201,6 @@ window.submitReply = async (parentCommentId, postId) => {
     if (!content.trim()) return;
     
     try {
-        // TODO: добавить поддержку ответов на комментарии в бэкенде
         showToast('Функция ответов на комментарии в разработке', 'info');
         input.value = '';
         replyDiv.style.display = 'none';
@@ -223,12 +219,13 @@ async function showLikesModal(postId) {
             content.innerHTML = '<div style="text-align: center; padding: 20px;">Нет лайков</div>';
         } else {
             content.innerHTML = likes.map(like => `
-                <div class="user-card" style="margin-bottom: 8px; cursor: pointer;" onclick="window.viewUserProfile('${like.user_id}'); document.getElementById('likesModal').classList.remove('active');">
+                <div class="user-card" style="margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px;" onclick="window.viewUserProfile('${like.user_id}'); document.getElementById('likesModal').classList.remove('active');">
                     <div class="user-avatar" style="width: 40px; height: 40px;">${(like.profiles?.username?.[0] || 'U').toUpperCase()}</div>
-                    <div>
+                    <div style="flex: 1;">
                         <div style="font-weight: 600;">${escapeHtml(like.profiles?.username)}</div>
                         <div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(like.profiles?.full_name || '')}</div>
                     </div>
+                    <div style="font-size: 11px; color: #A1A1AA;">${formatDate(like.created_at)}</div>
                 </div>
             `).join('');
         }
