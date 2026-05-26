@@ -4,7 +4,7 @@ import { viewUserProfile } from './profile.js';
 import { startChat } from './chats.js';
 
 export async function renderSearch(container, query = '') {
-    if (query.length < 2) {
+    if (!query || query.length < 2) {
         container.innerHTML = '';
         return;
     }
@@ -12,7 +12,7 @@ export async function renderSearch(container, query = '') {
     try {
         const users = await usersAPI.search(query);
         
-        if (users.length === 0) {
+        if (!users || users.length === 0) {
             container.innerHTML = '<div class="card" style="text-align: center;">Пользователи не найдены</div>';
         } else {
             container.innerHTML = users.map(user => `
@@ -34,9 +34,3 @@ export async function renderSearch(container, query = '') {
         container.innerHTML = '<div class="card" style="text-align: center;">Ошибка поиска</div>';
     }
 }
-
-window.searchUsers = async () => {
-    const query = document.getElementById('searchInput').value;
-    const container = document.getElementById('searchResults');
-    await renderSearch(container, query);
-};

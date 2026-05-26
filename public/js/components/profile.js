@@ -18,22 +18,18 @@ export async function renderMyProfile(container) {
                     <div style="font-size: 24px; font-weight: 700;">${escapeHtml(state.currentUser?.profile?.username || 'Пользователь')}</div>
                     <div style="color: #A1A1AA; font-size: 14px;">${escapeHtml(state.currentUser?.user?.email)}</div>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-secondary" onclick="window.openSettings()">⚙️ Настройки</button>
-                </div>
+                <button class="btn-secondary" onclick="window.openSettings()">⚙️ Настройки</button>
             </div>
             <div style="color: #A1A1AA; margin: 12px 0; line-height: 1.6;">${escapeHtml(state.currentUser?.profile?.bio || 'Расскажите о себе')}</div>
             ${state.currentUser?.profile?.birth_date ? `<div style="color: #7C3AED; margin: 8px 0;">🎂 ${escapeHtml(state.currentUser?.profile?.birth_date)}</div>` : ''}
             <div style="display: flex; gap: 24px; margin: 16px 0; padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                 <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="myPostsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">записей</div></div>
                 <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="myFriendsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">друзей</div></div>
-                <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="mySubscribersCount">0</div><div style="font-size: 12px; color: #A1A1AA;">подписчиков</div></div>
             </div>
         </div>
         <div style="display: flex; gap: 8px; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 60px; margin: 24px 0;">
             <button class="profile-tab active" onclick="window.switchMyProfileTab('posts')">📝 Мои записи</button>
             <button class="profile-tab" onclick="window.switchMyProfileTab('friends')">👥 Друзья</button>
-            <button class="profile-tab" onclick="window.switchMyProfileTab('photos')">📸 Фото</button>
         </div>
         <div id="myProfileTabContent"></div>
     `;
@@ -46,12 +42,13 @@ async function loadMyPosts() {
     try {
         const posts = await postsAPI.getUserPosts(state.currentUser.user.id);
         const container = document.getElementById('myProfileTabContent');
-        if (posts.length === 0) {
+        if (!posts || posts.length === 0) {
             container.innerHTML = '<div class="card" style="text-align: center;">У вас пока нет записей</div>';
         } else {
             container.innerHTML = posts.map(post => renderProfilePost(post)).join('');
         }
-        document.getElementById('myPostsCount').textContent = posts.length;
+        const countEl = document.getElementById('myPostsCount');
+        if (countEl) countEl.textContent = posts.length;
     } catch (error) {
         console.error('Ошибка загрузки постов:', error);
     }
@@ -73,8 +70,8 @@ function renderProfilePost(post) {
 async function loadProfileStats() {
     try {
         const friends = await usersAPI.getFriends();
-        document.getElementById('myFriendsCount').textContent = friends.length;
-        document.getElementById('mySubscribersCount').textContent = '0';
+        const friendsCountEl = document.getElementById('myFriendsCount');
+        if (friendsCountEl) friendsCountEl.textContent = friends.length;
     } catch (error) {
         console.error('Ошибка загрузки статистики:', error);
     }
@@ -82,15 +79,14 @@ async function loadProfileStats() {
 
 window.switchMyProfileTab = async (tab) => {
     currentProfileTab = tab;
-    document.querySelectorAll('#myProfileContainer .profile-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    const tabs = document.querySelectorAll('#myProfileContainer .profile-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
     
     if (tab === 'posts') {
         await loadMyPosts();
     } else if (tab === 'friends') {
         document.getElementById('myProfileTabContent').innerHTML = '<div class="card" style="text-align: center;">👥 Список друзей скоро появится...</div>';
-    } else if (tab === 'photos') {
-        document.getElementById('myProfileTabContent').innerHTML = '<div class="card" style="text-align: center;">📸 Фотоальбомы скоро появятся...</div>';
     }
 };
 
@@ -117,18 +113,11 @@ export async function viewUserProfile(userId) {
                         <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="userFriendsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">друзей</div></div>
                     </div>
                     <div style="display: flex; gap: 12px; margin-top: 16px;">
-                        ${!isOwnProfile ? `
-                            <button class="btn-primary" id="messageFromProfileBtn">💬 Сообщение</button>
-                            <button class="btn-secondary" id="friendRequestBtn">👥 Добавить в друзья</button>
-                        ` : ''}
+                        ${!isOwnProfile ? `<button class="btn-primary" id="messageFromProfileBtn">💬 Сообщение</button>` : ''}
                     </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 8px; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 60px; margin: 24px 0;">
-                <button class="profile-tab active" onclick="window.switchUserProfileTab('posts', '${user.id}')">📝 Записи</button>
-                <button class="profile-tab" onclick="window.switchUserProfileTab('friends', '${user.id}')">👥 Друзья</button>
-            </div>
-            <div id="userProfileTabContent"></div>
+            <div id="userProfileTabContent" style="margin-top: 24px;"></div>
         `;
         
         await loadUserPosts(user.id);
@@ -152,27 +141,17 @@ async function loadUserPosts(userId) {
     try {
         const posts = await postsAPI.getUserPosts(userId);
         const container = document.getElementById('userProfileTabContent');
-        if (posts.length === 0) {
+        if (!posts || posts.length === 0) {
             container.innerHTML = '<div class="card" style="text-align: center;">Нет записей на стене</div>';
         } else {
             container.innerHTML = posts.map(post => renderProfilePost(post)).join('');
         }
-        document.getElementById('userPostsCount').textContent = posts.length;
+        const countEl = document.getElementById('userPostsCount');
+        if (countEl) countEl.textContent = posts.length;
     } catch (error) {
         console.error('Ошибка загрузки постов пользователя:', error);
     }
 }
-
-window.switchUserProfileTab = async (tab, userId) => {
-    document.querySelectorAll('#userProfileModal .profile-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    if (tab === 'posts') {
-        await loadUserPosts(userId);
-    } else if (tab === 'friends') {
-        document.getElementById('userProfileTabContent').innerHTML = '<div class="card" style="text-align: center;">👥 Список друзей скоро появится...</div>';
-    }
-};
 
 window.closeUserProfile = () => {
     document.getElementById('userProfileModal').classList.remove('active');
@@ -180,6 +159,5 @@ window.closeUserProfile = () => {
 };
 
 window.openSettings = () => {
-    document.getElementById('userProfileModal')?.classList.remove('active');
     window.switchPage('settings');
 };

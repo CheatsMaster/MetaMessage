@@ -15,11 +15,7 @@ export async function apiFetch(endpoint, options = {}) {
 
 export const authAPI = {
     me: () => apiFetch('/api/auth/me'),
-    logout: () => apiFetch('/api/auth/logout', { method: 'POST' }),
-    updatePassword: (oldPassword, newPassword) => apiFetch('/api/auth/change-password', { 
-        method: 'POST', 
-        body: JSON.stringify({ oldPassword, newPassword }) 
-    })
+    logout: () => apiFetch('/api/auth/logout', { method: 'POST' })
 };
 
 export const postsAPI = {
@@ -30,11 +26,10 @@ export const postsAPI = {
     }),
     like: (postId) => apiFetch(`/api/posts/${postId}/like`, { method: 'POST' }),
     getComments: (postId) => apiFetch(`/api/posts/${postId}/comments`),
-    addComment: (postId, content, parentId = null) => apiFetch(`/api/posts/${postId}/comments`, { 
+    addComment: (postId, content) => apiFetch(`/api/posts/${postId}/comments`, { 
         method: 'POST', 
-        body: JSON.stringify({ content, parent_id: parentId }) 
+        body: JSON.stringify({ content }) 
     }),
-    likeComment: (commentId) => apiFetch(`/api/comments/${commentId}/like`, { method: 'POST' }),
     getUserPosts: (userId) => apiFetch(`/api/posts/user/${userId}`)
 };
 
@@ -46,23 +41,12 @@ export const chatsAPI = {
         method: 'POST', 
         body: JSON.stringify({ content }) 
     }),
-    getParticipants: (chatId) => apiFetch(`/api/chats/${chatId}/participants`),
-    clearChat: (chatId) => apiFetch(`/api/chats/${chatId}/clear`, { method: 'POST' }),
-    blockUser: (userId) => apiFetch(`/api/chats/block/${userId}`, { method: 'POST' })
+    getParticipants: (chatId) => apiFetch(`/api/chats/${chatId}/participants`)
 };
 
 export const usersAPI = {
     getProfile: (userId) => apiFetch(`/api/users/${userId}`),
     updateProfile: (data) => apiFetch('/api/users/profile', { method: 'PUT', body: JSON.stringify(data) }),
     search: (query) => apiFetch(`/api/friends/search?q=${encodeURIComponent(query)}`),
-    sendFriendRequest: (userId) => apiFetch(`/api/friends/request/${userId}`, { method: 'POST' }),
-    acceptFriendRequest: (requestId) => apiFetch(`/api/friends/accept/${requestId}`, { method: 'POST' }),
-    getFriends: () => apiFetch('/api/friends'),
-    getFriendRequests: () => apiFetch('/api/friends/requests')
-};
-
-export const notificationsAPI = {
-    get: () => apiFetch('/api/notifications'),
-    markAsRead: (id) => apiFetch(`/api/notifications/${id}/read`, { method: 'POST' }),
-    markAllRead: () => apiFetch('/api/notifications/read-all', { method: 'POST' })
+    getFriends: () => apiFetch('/api/friends')
 };

@@ -21,7 +21,6 @@ export function formatDate(dateString) {
 }
 
 export function showToast(message, type = 'info') {
-    // Создаём временный тост
     const toast = document.createElement('div');
     toast.textContent = message;
     toast.style.cssText = `

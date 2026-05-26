@@ -9,7 +9,7 @@ export async function renderChats(container) {
     try {
         const chats = await chatsAPI.getChats();
         
-        if (chats.length === 0) {
+        if (!chats || chats.length === 0) {
             container.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет чатов. Начните диалог через поиск!</div>';
         } else {
             container.innerHTML = chats.map(chat => `
@@ -46,11 +46,13 @@ export async function startChat(userId) {
     }
 }
 
-window.openChat = async (chatId) => {
+export async function openChat(chatId) {
     setState({ currentChat: chatId });
     
-    document.getElementById('chatsListCard').style.display = 'none';
-    document.getElementById('chatWindow').style.display = 'block';
+    const chatsCard = document.getElementById('chatsListCard');
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatsCard) chatsCard.style.display = 'none';
+    if (chatWindow) chatWindow.style.display = 'block';
     
     await loadChatUserInfo(chatId);
     await loadMessages();
@@ -59,7 +61,7 @@ window.openChat = async (chatId) => {
     refreshInterval = setInterval(() => {
         if (state.currentChat) loadMessages();
     }, 3000);
-};
+}
 
 async function loadChatUserInfo(chatId) {
     try {
@@ -67,17 +69,10 @@ async function loadChatUserInfo(chatId) {
         const otherSender = messages.find(m => m.sender_id !== state.currentUser?.user?.id);
         if (otherSender) {
             setState({ currentChatUser: otherSender.profiles });
-            document.getElementById('chatUserName').textContent = otherSender.profiles?.username || 'Пользователь';
-            document.getElementById('chatAvatar').textContent = (otherSender.profiles?.username?.[0] || 'U').toUpperCase();
-        } else {
-            const participants = await chatsAPI.getParticipants(chatId);
-            const otherUser = participants.find(p => p.user_id !== state.currentUser?.user?.id);
-            if (otherUser) {
-                const user = await usersAPI.getProfile(otherUser.user_id);
-                setState({ currentChatUser: user });
-                document.getElementById('chatUserName').textContent = user.username || 'Пользователь';
-                document.getElementById('chatAvatar').textContent = (user.username?.[0] || 'U').toUpperCase();
-            }
+            const userNameEl = document.getElementById('chatUserName');
+            const avatarEl = document.getElementById('chatAvatar');
+            if (userNameEl) userNameEl.textContent = otherSender.profiles?.username || 'Пользователь';
+            if (avatarEl) avatarEl.textContent = (otherSender.profiles?.username?.[0] || 'U').toUpperCase();
         }
     } catch (error) {
         console.error('Ошибка загрузки информации о чате:', error);
@@ -89,9 +84,11 @@ async function loadMessages() {
     try {
         const messages = await chatsAPI.getMessages(state.currentChat);
         const messagesDiv = document.getElementById('chatMessages');
+        if (!messagesDiv) return;
+        
         const wasAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 100;
         
-        if (messages.length === 0) {
+        if (!messages || messages.length === 0) {
             messagesDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет сообщений. Напишите что-нибудь!</div>';
         } else {
             messagesDiv.innerHTML = messages.map(msg => `
@@ -110,44 +107,41 @@ async function loadMessages() {
     }
 }
 
-window.sendMessage = async () => {
+export async function sendMessage() {
     const input = document.getElementById('messageInput');
-    const content = input.value;
-    if (!content.trim() || !state.currentChat) return;
+    const content = input?.value;
+    if (!content?.trim() || !state.currentChat) return;
     
     try {
         await chatsAPI.sendMessage(state.currentChat, content);
-        input.value = '';
+        if (input) input.value = '';
         await loadMessages();
         await renderChats(document.getElementById('chatsList'));
     } catch (error) {
         showToast('Ошибка отправки сообщения', 'error');
     }
-};
+}
 
-window.closeChat = () => {
+export function closeChat() {
     setState({ currentChat: null, currentChatUser: null });
-    document.getElementById('chatsListCard').style.display = 'block';
-    document.getElementById('chatWindow').style.display = 'none';
+    const chatsCard = document.getElementById('chatsListCard');
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatsCard) chatsCard.style.display = 'block';
+    if (chatWindow) chatWindow.style.display = 'none';
     if (refreshInterval) {
         clearInterval(refreshInterval);
         refreshInterval = null;
     }
     renderChats(document.getElementById('chatsList'));
-};
+}
 
-window.viewChatUserProfile = () => {
+export function viewChatUserProfile() {
     if (state.currentChatUser) {
         closeChat();
         viewUserProfile(state.currentChatUser.id);
     }
-};
+}
 
-window.showChatMenu = () => {
-    const options = confirm('Очистить чат?');
-    if (options) {
-        showToast('Функция в разработке', 'info');
-    }
-};
-
-window.startChat = startChat;
+export function showChatMenu() {
+    showToast('🚧 Функция в разработке', 'info');
+}
