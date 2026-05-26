@@ -231,4 +231,83 @@ router.get('/:chatId/participants', authenticateToken, async (req, res) => {
   }
 });
 
+// Редактировать сообщение
+router.put('/:chatId/messages/:messageId', authenticateToken, async (req, res) => {
+  const { chatId, messageId } = req.params;
+  const { content } = req.body;
+  const userId = req.user.id;
+  
+  if (!content || !content.trim()) {
+    return res.status(400).json({ error: 'Сообщение не может быть пустым' });
+  }
+  
+  try {
+    // Проверяем, что сообщение принадлежит пользователю
+    const { data: message, error: findError } = await supabaseAdmin
+      .from('messages')
+      .select('sender_id')
+      .eq('id', messageId)
+      .eq('chat_id', chatId)
+      .single();
+    
+    if (findError) throw findError;
+    
+    if (message.sender_id !== userId) {
+      return res.status(403).json({ error: 'Вы не можете редактировать это сообщение' });
+    }
+    
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .update({ 
+        content: content.trim(),
+        edited_at: new Date()
+      })
+      .eq('id', messageId)
+      .select(`
+        *,
+        profiles:sender_id (id, username, avatar_url, full_name)
+      `)
+      .single();
+    
+    if (error) throw error;
+    
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Удалить сообщение
+router.delete('/:chatId/messages/:messageId', authenticateToken, async (req, res) => {
+  const { chatId, messageId } = req.params;
+  const userId = req.user.id;
+  
+  try {
+    // Проверяем, что сообщение принадлежит пользователю
+    const { data: message, error: findError } = await supabaseAdmin
+      .from('messages')
+      .select('sender_id')
+      .eq('id', messageId)
+      .eq('chat_id', chatId)
+      .single();
+    
+    if (findError) throw findError;
+    
+    if (message.sender_id !== userId) {
+      return res.status(403).json({ error: 'Вы не можете удалить это сообщение' });
+    }
+    
+    const { error } = await supabaseAdmin
+      .from('messages')
+      .delete()
+      .eq('id', messageId);
+    
+    if (error) throw error;
+    
+    res.json({ message: 'Сообщение удалено' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

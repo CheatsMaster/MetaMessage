@@ -32,7 +32,12 @@ export const postsAPI = {
     }),
     getUserPosts: (userId) => apiFetch(`/api/posts/user/${userId}`),
     likeComment: (commentId) => apiFetch(`/api/posts/comments/${commentId}/like`, { method: 'POST' }),
-    getPostLikes: (postId) => apiFetch(`/api/posts/${postId}/likes`)
+    getPostLikes: (postId) => apiFetch(`/api/posts/${postId}/likes`),
+    update: (postId, content) => apiFetch(`/api/posts/${postId}`, { 
+        method: 'PUT', 
+        body: JSON.stringify({ content }) 
+    }),
+    delete: (postId) => apiFetch(`/api/posts/${postId}`, { method: 'DELETE' })
 };
 
 export const chatsAPI = {
@@ -43,7 +48,12 @@ export const chatsAPI = {
         method: 'POST', 
         body: JSON.stringify({ content }) 
     }),
-    getParticipants: (chatId) => apiFetch(`/api/chats/${chatId}/participants`)
+    getParticipants: (chatId) => apiFetch(`/api/chats/${chatId}/participants`),
+    updateMessage: (chatId, messageId, content) => apiFetch(`/api/chats/${chatId}/messages/${messageId}`, { 
+        method: 'PUT', 
+        body: JSON.stringify({ content }) 
+    }),
+    deleteMessage: (chatId, messageId) => apiFetch(`/api/chats/${chatId}/messages/${messageId}`, { method: 'DELETE' })
 };
 
 export const usersAPI = {

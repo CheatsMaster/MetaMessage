@@ -60,6 +60,13 @@ function renderPost(post) {
                     👥
                 </div>
             </div>
+            <div class="post-menu" style="position: relative; margin-left: auto;">
+                <button class="post-menu-btn" data-post-id="${post.id}" style="background: none; border: none; color: #A1A1AA; cursor: pointer; font-size: 18px;">⋮</button>
+                <div class="post-menu-dropdown" id="post-menu-${post.id}" style="display: none; position: absolute; right: 0; background: #2A2A2A; border-radius: 12px; padding: 8px 0; min-width: 150px; z-index: 10;">
+                    <button class="post-menu-item" onclick="window.editPost('${post.id}')" style="display: block; width: 100%; padding: 8px 16px; background: none; border: none; color: white; text-align: left; cursor: pointer;">✏️ Редактировать</button>
+                    <button class="post-menu-item" onclick="window.deletePost('${post.id}')" style="display: block; width: 100%; padding: 8px 16px; background: none; border: none; color: #EF4444; text-align: left; cursor: pointer;">🗑️ Удалить</button>
+                </div>
+            </div>
             <div class="comments-section" id="comments-${post.id}" style="display: none;">
                 <div id="comments-list-${post.id}"></div>
                 <div class="comment-input">
@@ -246,6 +253,60 @@ async function showLikesModal(postId) {
         showToast('Ошибка загрузки списка лайков', 'error');
     }
 }
+
+window.editPost = async (postId) => {
+    const post = document.querySelector(`.post[data-post-id="${postId}"]`);
+    const contentDiv = post.querySelector('.post-content');
+    const oldContent = contentDiv.textContent;
+    
+    const newContent = prompt('Редактировать пост:', oldContent);
+    if (newContent && newContent.trim() && newContent !== oldContent) {
+        try {
+            await postsAPI.update(postId, newContent);
+            contentDiv.textContent = newContent;
+            showToast('✅ Пост обновлен', 'success');
+        } catch (error) {
+            showToast('Ошибка редактирования', 'error');
+        }
+    }
+};
+
+window.deletePost = async (postId) => {
+    if (confirm('Удалить пост?')) {
+        try {
+            await postsAPI.delete(postId);
+            document.querySelector(`.post[data-post-id="${postId}"]`).remove();
+            showToast('✅ Пост удален', 'success');
+        } catch (error) {
+            showToast('Ошибка удаления', 'error');
+        }
+    }
+};
+
+// Обработчики меню
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('post-menu-btn')) {
+        document.querySelectorAll('.post-menu-dropdown').forEach(menu => {
+            menu.style.display = 'none';
+        });
+    }
+});
+
+// В renderPost добавить обработчик для кнопки меню (после рендера)
+// Или добавить глобальный обработчик
+setTimeout(() => {
+    document.querySelectorAll('.post-menu-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const postId = btn.dataset.postId;
+            const menu = document.getElementById(`post-menu-${postId}`);
+            document.querySelectorAll('.post-menu-dropdown').forEach(m => {
+                if (m.id !== `post-menu-${postId}`) m.style.display = 'none';
+            });
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+}, 100);
 
 window.closeLikesModal = () => {
     document.getElementById('likesModal').classList.remove('active');

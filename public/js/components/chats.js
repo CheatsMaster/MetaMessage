@@ -92,19 +92,92 @@ async function loadMessages() {
             messagesDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет сообщений. Напишите что-нибудь!</div>';
         } else {
             messagesDiv.innerHTML = messages.map(msg => `
-                <div class="message ${msg.sender_id === state.currentUser?.user?.id ? 'sent' : ''}">
-                    <div class="message-bubble">
+                <div class="message ${msg.sender_id === state.currentUser?.user?.id ? 'sent' : ''}" data-message-id="${msg.id}" data-chat-id="${state.currentChat}">
+                    <div class="message-bubble" style="position: relative;">
+                        ${msg.sender_id === state.currentUser?.user?.id ? `
+                            <button class="message-menu-btn" style="position: absolute; top: 5px; right: 5px; background: none; border: none; color: #A1A1AA; cursor: pointer; font-size: 14px;">⋮</button>
+                            <div class="message-menu-dropdown" id="msg-menu-${msg.id}" style="display: none; position: absolute; right: 25px; top: 0; background: #2A2A2A; border-radius: 12px; padding: 8px 0; min-width: 120px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                                <button class="msg-edit-btn" data-message-id="${msg.id}" data-content="${escapeHtml(msg.content).replace(/"/g, '&quot;')}" style="display: block; width: 100%; padding: 6px 12px; background: none; border: none; color: white; text-align: left; cursor: pointer;">✏️ Редактировать</button>
+                                <button class="msg-delete-btn" data-message-id="${msg.id}" style="display: block; width: 100%; padding: 6px 12px; background: none; border: none; color: #EF4444; text-align: left; cursor: pointer;">🗑️ Удалить</button>
+                            </div>
+                        ` : ''}
                         <div style="font-size: 11px; margin-bottom: 4px; color: #C084FC;">${escapeHtml(msg.profiles?.username)}</div>
-                        ${escapeHtml(msg.content)}
+                        <div class="message-content">${escapeHtml(msg.content)}</div>
+                        ${msg.edited_at ? `<div style="font-size: 9px; margin-top: 4px; color: #A1A1AA;">(изменено)</div>` : ''}
                         <div style="font-size: 10px; margin-top: 4px; color: #A1A1AA;">${new Date(msg.created_at).toLocaleTimeString()}</div>
                     </div>
                 </div>
             `).join('');
+            
+            // Добавляем обработчики для меню сообщений
+            messagesDiv.querySelectorAll('.message-menu-btn').forEach(btn => {
+                btn.removeEventListener('click', handleMenuClick);
+                btn.addEventListener('click', handleMenuClick);
+            });
+            
+            messagesDiv.querySelectorAll('.msg-edit-btn').forEach(btn => {
+                btn.removeEventListener('click', handleEditClick);
+                btn.addEventListener('click', handleEditClick);
+            });
+            
+            messagesDiv.querySelectorAll('.msg-delete-btn').forEach(btn => {
+                btn.removeEventListener('click', handleDeleteClick);
+                btn.addEventListener('click', handleDeleteClick);
+            });
+            
             if (wasAtBottom) messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
     } catch (error) {
         console.error('Ошибка загрузки сообщений:', error);
     }
+}
+
+function handleMenuClick(e) {
+    e.stopPropagation();
+    const btn = e.target;
+    const msgDiv = btn.closest('.message');
+    const msgId = msgDiv.dataset.messageId;
+    const menu = document.getElementById(`msg-menu-${msgId}`);
+    document.querySelectorAll('.message-menu-dropdown').forEach(m => {
+        if (m.id !== `msg-menu-${msgId}`) m.style.display = 'none';
+    });
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+async function handleEditClick(e) {
+    e.stopPropagation();
+    const btn = e.target;
+    const messageId = btn.dataset.messageId;
+    const oldContent = btn.dataset.content;
+    const newContent = prompt('Редактировать сообщение:', oldContent);
+    if (newContent && newContent.trim() && newContent !== oldContent) {
+        try {
+            await chatsAPI.updateMessage(state.currentChat, messageId, newContent);
+            await loadMessages();
+            showToast('✅ Сообщение обновлено', 'success');
+        } catch (error) {
+            showToast('Ошибка редактирования', 'error');
+        }
+    }
+    const menu = document.getElementById(`msg-menu-${messageId}`);
+    if (menu) menu.style.display = 'none';
+}
+
+async function handleDeleteClick(e) {
+    e.stopPropagation();
+    const btn = e.target;
+    const messageId = btn.dataset.messageId;
+    if (confirm('Удалить сообщение?')) {
+        try {
+            await chatsAPI.deleteMessage(state.currentChat, messageId);
+            await loadMessages();
+            showToast('✅ Сообщение удалено', 'success');
+        } catch (error) {
+            showToast('Ошибка удаления', 'error');
+        }
+    }
+    const menu = document.getElementById(`msg-menu-${messageId}`);
+    if (menu) menu.style.display = 'none';
 }
 
 export async function sendMessage() {
@@ -145,3 +218,10 @@ export function viewChatUserProfile() {
 export function showChatMenu() {
     showToast('🚧 Функция в разработке', 'info');
 }
+
+// Закрываем меню при клике вне
+document.addEventListener('click', () => {
+    document.querySelectorAll('.message-menu-dropdown').forEach(menu => {
+        menu.style.display = 'none';
+    });
+});

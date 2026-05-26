@@ -281,4 +281,86 @@ router.get('/:postId/likes', authenticateToken, async (req, res) => {
   }
 });
 
+// Редактировать пост
+router.put('/:postId', authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  const { content } = req.body;
+  const userId = req.user.id;
+  
+  if (!content || !content.trim()) {
+    return res.status(400).json({ error: 'Содержание поста не может быть пустым' });
+  }
+  
+  try {
+    // Проверяем, что пост принадлежит пользователю
+    const { data: post, error: findError } = await supabaseAdmin
+      .from('posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+    
+    if (findError) throw findError;
+    
+    if (post.user_id !== userId) {
+      return res.status(403).json({ error: 'Вы не можете редактировать этот пост' });
+    }
+    
+    const { data, error } = await supabaseAdmin
+      .from('posts')
+      .update({ 
+        content: content.trim(),
+        edited_at: new Date()
+      })
+      .eq('id', postId)
+      .select(`
+        *,
+        profiles:user_id (id, username, avatar_url, full_name)
+      `)
+      .single();
+    
+    if (error) throw error;
+    
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Удалить пост
+router.delete('/:postId', authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  const userId = req.user.id;
+  
+  try {
+    // Проверяем, что пост принадлежит пользователю
+    const { data: post, error: findError } = await supabaseAdmin
+      .from('posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+    
+    if (findError) throw findError;
+    
+    if (post.user_id !== userId) {
+      return res.status(403).json({ error: 'Вы не можете удалить этот пост' });
+    }
+    
+    // Удаляем сначала лайки и комментарии (каскадно)
+    await supabaseAdmin.from('post_likes').delete().eq('post_id', postId);
+    await supabaseAdmin.from('post_comments').delete().eq('post_id', postId);
+    
+    // Удаляем пост
+    const { error } = await supabaseAdmin
+      .from('posts')
+      .delete()
+      .eq('id', postId);
+    
+    if (error) throw error;
+    
+    res.json({ message: 'Пост удален' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
