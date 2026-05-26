@@ -91,7 +91,7 @@
             border-radius: 24px 24px 0 0;
         }
         
-        .vk-avatar {
+        .vk-avatar-large {
             position: absolute;
             bottom: -50px;
             left: 24px;
@@ -162,6 +162,7 @@
             padding: 4px;
             border-radius: 60px;
             margin-bottom: 24px;
+            margin-top: 24px;
         }
         
         .profile-tab {
@@ -186,6 +187,11 @@
             margin-bottom: 24px;
         }
         
+        /* Стили для контейнера постов без лишних аватарок */
+        #userPostsContainer, #myPostsContainer {
+            margin-top: 0;
+        }
+        
         @media (max-width: 768px) {
             .chat-header {
                 flex-direction: row;
@@ -200,7 +206,7 @@
                 padding: 8px 12px;
             }
             
-            .vk-avatar {
+            .vk-avatar-large {
                 width: 80px;
                 height: 80px;
                 bottom: -40px;
@@ -376,14 +382,14 @@
                 const res = await fetch('/api/posts/feed');
                 if (!res.ok) throw new Error('Ошибка загрузки');
                 const posts = await res.json();
-                document.getElementById('postsFeed').innerHTML = posts.map(post => renderPost(post, false)).join('');
+                document.getElementById('postsFeed').innerHTML = posts.map(post => renderPost(post)).join('');
             } catch (error) {
                 console.error('Ошибка загрузки ленты:', error);
                 document.getElementById('postsFeed').innerHTML = '<div class="card">Ошибка загрузки постов</div>';
             }
         }
 
-        function renderPost(post, isWall = false) {
+        function renderPost(post) {
             return `
                 <div class="post" data-post-id="${post.id}">
                     <div class="post-header">
@@ -422,9 +428,17 @@
             
             if (res.ok) {
                 document.getElementById('postContent').value = '';
-                if (targetUserId) await loadUserPosts(targetUserId);
-                else loadFeed();
-            } else alert('Ошибка создания поста');
+                if (targetUserId && viewedUser) {
+                    await loadUserPosts(viewedUser.id);
+                } else {
+                    loadFeed();
+                }
+                if (document.getElementById('myProfileContainer').innerHTML) {
+                    await loadMyPosts();
+                }
+            } else {
+                alert('Ошибка создания поста');
+            }
         }
 
         async function createWallPost() {
@@ -440,14 +454,21 @@
             if (res.ok) {
                 document.getElementById('wallPostContent').value = '';
                 await loadUserPosts(viewedUser.id);
-            } else alert('Ошибка отправки на стену');
+            } else {
+                alert('Ошибка отправки на стену');
+            }
         }
 
         async function toggleLike(postId) {
             await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
             if (viewedUser && document.getElementById('userProfileModal').classList.contains('active')) {
                 await loadUserPosts(viewedUser.id);
-            } else loadFeed();
+            } else {
+                loadFeed();
+            }
+            if (document.getElementById('myProfileContainer').innerHTML) {
+                await loadMyPosts();
+            }
         }
 
         async function toggleComments(postId) {
@@ -455,7 +476,9 @@
             if (commentsDiv.style.display === 'none') {
                 commentsDiv.style.display = 'block';
                 await loadComments(postId);
-            } else commentsDiv.style.display = 'none';
+            } else {
+                commentsDiv.style.display = 'none';
+            }
         }
 
         async function loadComments(postId) {
@@ -465,8 +488,9 @@
                 const comments = await res.json();
                 const commentsList = document.getElementById(`comments-list-${postId}`);
                 
-                if (comments.length === 0) commentsList.innerHTML = '<div style="color: #A1A1AA; text-align: center; padding: 20px;">Нет комментариев. Будьте первым!</div>';
-                else {
+                if (comments.length === 0) {
+                    commentsList.innerHTML = '<div style="color: #A1A1AA; text-align: center; padding: 20px;">Нет комментариев. Будьте первым!</div>';
+                } else {
                     commentsList.innerHTML = comments.map(c => `
                         <div class="comment">
                             <div class="comment-avatar" onclick="viewUserProfile('${c.user_id}')" style="cursor: pointer;">${(c.profiles?.username?.[0] || 'U').toUpperCase()}</div>
@@ -498,22 +522,31 @@
             if (res.ok) {
                 input.value = '';
                 await loadComments(postId);
-                if (viewedUser && document.getElementById('userProfileModal').classList.contains('active')) await loadUserPosts(viewedUser.id);
-                else loadFeed();
-            } else alert('Ошибка отправки комментария');
+                if (viewedUser && document.getElementById('userProfileModal').classList.contains('active')) {
+                    await loadUserPosts(viewedUser.id);
+                } else {
+                    loadFeed();
+                }
+            } else {
+                alert('Ошибка отправки комментария');
+            }
         }
 
         async function searchUsers() {
             const query = document.getElementById('searchInput').value;
-            if (query.length < 2) { document.getElementById('searchResults').innerHTML = ''; return; }
+            if (query.length < 2) { 
+                document.getElementById('searchResults').innerHTML = ''; 
+                return; 
+            }
             
             try {
                 const res = await fetch(`/api/friends/search?q=${encodeURIComponent(query)}`);
                 if (!res.ok) throw new Error('Ошибка поиска');
                 const users = await res.json();
                 
-                if (users.length === 0) document.getElementById('searchResults').innerHTML = '<div class="card" style="text-align: center;">Пользователи не найдены</div>';
-                else {
+                if (users.length === 0) {
+                    document.getElementById('searchResults').innerHTML = '<div class="card" style="text-align: center;">Пользователи не найдены</div>';
+                } else {
                     document.getElementById('searchResults').innerHTML = users.map(user => `
                         <div class="user-card">
                             <div class="user-info" onclick="viewUserProfile('${user.id}')" style="cursor: pointer; flex: 1;">
@@ -524,7 +557,7 @@
                                     <div style="font-size: 11px; color: #A1A1AA; margin-top: 4px;">${escapeHtml(user.bio?.substring(0, 50) || '')}</div>
                                 </div>
                             </div>
-                            <button class="btn-secondary" onclick="startChat('${user.id}')">💬 Написать</button>
+                            <button class="btn-secondary" onclick="event.stopPropagation(); startChat('${user.id}')">💬 Написать</button>
                         </div>
                     `).join('');
                 }
@@ -557,7 +590,7 @@
             content.innerHTML = `
                 <div class="vk-profile-header">
                     <div class="vk-cover"></div>
-                    <div class="vk-avatar">${(user.username?.[0] || 'U').toUpperCase()}</div>
+                    <div class="vk-avatar-large">${(user.username?.[0] || 'U').toUpperCase()}</div>
                     <div class="vk-profile-info">
                         <div class="vk-profile-name">${escapeHtml(user.username || 'Пользователь')}</div>
                         <div class="vk-profile-bio">${escapeHtml(user.bio || 'Расскажите о себе')}</div>
@@ -569,13 +602,15 @@
                         </div>
                         <div class="vk-action-buttons">
                             ${!isOwnProfile ? `
-                                <button class="btn-primary" onclick="startChat('${user.id}'); closeUserProfile();">💬 Сообщение</button>
+                                <button class="btn-primary" id="messageFromProfileBtn">💬 Сообщение</button>
                                 <button class="btn-secondary" onclick="subscribeUser('${user.id}')">👥 Подписаться</button>
-                            ` : `<button class="btn-secondary" onclick="openEditProfile()">✏️ Редактировать</button>`}
+                            ` : `
+                                <button class="btn-secondary" onclick="closeUserProfile(); openEditProfile();">✏️ Редактировать</button>
+                            `}
                         </div>
                     </div>
                 </div>
-                <div class="profile-tabs" style="margin-top: 24px;">
+                <div class="profile-tabs">
                     <button class="profile-tab active" onclick="switchProfileTab('posts', '${user.id}')">📝 Записи</button>
                     <button class="profile-tab" onclick="switchProfileTab('photos', '${user.id}')">📸 Фото</button>
                 </div>
@@ -583,6 +618,15 @@
             `;
             
             document.getElementById('userPostsCount').textContent = window.currentUserPostsCount || 0;
+            
+            // Привязываем обработчик к кнопке "Сообщение"
+            const msgBtn = document.getElementById('messageFromProfileBtn');
+            if (msgBtn) {
+                msgBtn.onclick = async () => {
+                    closeUserProfile();
+                    await startChat(user.id);
+                };
+            }
             
             if (!isOwnProfile) {
                 const postsContainer = document.getElementById('userPostsContainer');
@@ -609,19 +653,24 @@
                     if (posts.length === 0) {
                         postsContainer.innerHTML = (existingForm ? existingForm.outerHTML : '') + '<div class="card" style="text-align: center;">Нет записей на стене</div>';
                     } else {
-                        postsContainer.innerHTML = (existingForm ? existingForm.outerHTML : '') + posts.map(post => renderPost(post, true)).join('');
+                        postsContainer.innerHTML = (existingForm ? existingForm.outerHTML : '') + posts.map(post => renderPost(post)).join('');
                     }
                 }
-            } catch (error) { console.error('Ошибка загрузки постов пользователя:', error); }
+            } catch (error) { 
+                console.error('Ошибка загрузки постов пользователя:', error); 
+            }
         }
         
         async function switchProfileTab(tab, userId) {
             currentProfileTab = tab;
-            document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#userProfileModal .profile-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
             
-            if (tab === 'posts') await loadUserPosts(userId);
-            else if (tab === 'photos') document.getElementById('userPostsContainer').innerHTML = '<div class="card" style="text-align: center;">📸 Фотоальбомы скоро появятся...</div>';
+            if (tab === 'posts') {
+                await loadUserPosts(userId);
+            } else if (tab === 'photos') {
+                document.getElementById('userPostsContainer').innerHTML = '<div class="card" style="text-align: center;">📸 Фотоальбомы скоро появятся...</div>';
+            }
         }
 
         function closeUserProfile() {
@@ -630,7 +679,9 @@
             currentProfileTab = 'posts';
         }
 
-        async function subscribeUser(userId) { alert('🚧 Функция подписки в разработке'); }
+        async function subscribeUser(userId) { 
+            alert('🚧 Функция подписки в разработке'); 
+        }
 
         async function renderMyProfile() {
             if (!currentUser) await loadProfile();
@@ -639,7 +690,7 @@
             container.innerHTML = `
                 <div class="vk-profile-header">
                     <div class="vk-cover"></div>
-                    <div class="vk-avatar">${(currentUser?.profile?.username?.[0] || 'U').toUpperCase()}</div>
+                    <div class="vk-avatar-large">${(currentUser?.profile?.username?.[0] || 'U').toUpperCase()}</div>
                     <div class="vk-profile-info">
                         <div class="vk-profile-name">${escapeHtml(currentUser?.profile?.username || 'Пользователь')}</div>
                         <div class="vk-profile-bio">${escapeHtml(currentUser?.profile?.bio || 'Расскажите о себе')}</div>
@@ -649,10 +700,12 @@
                             <div class="vk-stat"><div class="vk-stat-number" id="mySubscribersCount">0</div><div class="vk-stat-label">подписчиков</div></div>
                             <div class="vk-stat"><div class="vk-stat-number" id="mySubscriptionsCount">0</div><div class="vk-stat-label">подписок</div></div>
                         </div>
-                        <div class="vk-action-buttons"><button class="btn-secondary" onclick="openEditProfile()">✏️ Редактировать профиль</button></div>
+                        <div class="vk-action-buttons">
+                            <button class="btn-secondary" onclick="openEditProfile()">✏️ Редактировать профиль</button>
+                        </div>
                     </div>
                 </div>
-                <div class="profile-tabs" style="margin-top: 24px;">
+                <div class="profile-tabs">
                     <button class="profile-tab active" onclick="switchMyProfileTab('posts')">📝 Мои записи</button>
                     <button class="profile-tab" onclick="switchMyProfileTab('photos')">📸 Фото</button>
                 </div>
@@ -668,17 +721,25 @@
                 if (!res.ok) throw new Error('Ошибка загрузки постов');
                 const posts = await res.json();
                 const container = document.getElementById('myPostsContainer');
-                if (posts.length === 0) container.innerHTML = '<div class="card" style="text-align: center;">У вас пока нет записей</div>';
-                else container.innerHTML = posts.map(post => renderPost(post, true)).join('');
+                if (posts.length === 0) {
+                    container.innerHTML = '<div class="card" style="text-align: center;">У вас пока нет записей</div>';
+                } else {
+                    container.innerHTML = posts.map(post => renderPost(post)).join('');
+                }
                 document.getElementById('myPostsCount').textContent = posts.length;
-            } catch (error) { console.error('Ошибка загрузки моих постов:', error); }
+            } catch (error) { 
+                console.error('Ошибка загрузки моих постов:', error); 
+            }
         }
         
         async function switchMyProfileTab(tab) {
             document.querySelectorAll('#myProfileContainer .profile-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            if (tab === 'posts') await loadMyPosts();
-            else document.getElementById('myPostsContainer').innerHTML = '<div class="card" style="text-align: center;">📸 Фотоальбомы скоро появятся...</div>';
+            if (tab === 'posts') {
+                await loadMyPosts();
+            } else {
+                document.getElementById('myPostsContainer').innerHTML = '<div class="card" style="text-align: center;">📸 Фотоальбомы скоро появятся...</div>';
+            }
         }
 
         async function loadChats() {
@@ -686,8 +747,9 @@
                 const res = await fetch('/api/chats');
                 if (!res.ok) throw new Error('Ошибка загрузки чатов');
                 const chats = await res.json();
-                if (chats.length === 0) document.getElementById('chatsList').innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет чатов. Начните диалог через поиск!</div>';
-                else {
+                if (chats.length === 0) {
+                    document.getElementById('chatsList').innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет чатов. Начните диалог через поиск!</div>';
+                } else {
                     document.getElementById('chatsList').innerHTML = chats.map(chat => `
                         <div class="chat-item" onclick="openChat('${chat.id}')">
                             <div><div style="font-weight: 600;">${escapeHtml(chat.name || 'Личный чат')}</div><div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(chat.last_message?.content || 'Нет сообщений')}</div></div>
@@ -695,17 +757,25 @@
                         </div>
                     `).join('');
                 }
-            } catch (error) { console.error('Ошибка загрузки чатов:', error); }
+            } catch (error) { 
+                console.error('Ошибка загрузки чатов:', error); 
+            }
         }
 
         async function startChat(userId) {
             try {
                 const res = await fetch(`/api/chats/private/${userId}`, { method: 'POST' });
-                if (!res.ok) throw new Error('Ошибка создания чата');
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || 'Ошибка создания чата');
+                }
                 const chat = await res.json();
                 await openChat(chat.id);
                 switchPage('chats');
-            } catch (error) { console.error('Ошибка создания чата:', error); alert('Не удалось начать чат'); }
+            } catch (error) { 
+                console.error('Ошибка создания чата:', error); 
+                alert('Не удалось начать чат: ' + error.message);
+            }
         }
 
         async function openChat(chatId) {
@@ -727,8 +797,23 @@
                     currentChatUser = otherSender.profiles;
                     document.getElementById('chatUserName').textContent = currentChatUser?.username || 'Пользователь';
                     document.getElementById('chatAvatar').textContent = (currentChatUser?.username?.[0] || 'U').toUpperCase();
+                } else {
+                    // Если сообщений нет, пытаемся получить участников через отдельный эндпоинт
+                    const participantsRes = await fetch(`/api/chats/${chatId}/participants`);
+                    if (participantsRes.ok) {
+                        const participants = await participantsRes.json();
+                        const otherUser = participants.find(p => p.user_id !== currentUser?.user?.id);
+                        if (otherUser) {
+                            const userRes = await fetch(`/api/users/${otherUser.user_id}`);
+                            currentChatUser = await userRes.json();
+                            document.getElementById('chatUserName').textContent = currentChatUser?.username || 'Пользователь';
+                            document.getElementById('chatAvatar').textContent = (currentChatUser?.username?.[0] || 'U').toUpperCase();
+                        }
+                    }
                 }
-            } catch (error) { console.error('Ошибка загрузки информации о чате:', error); }
+            } catch (error) { 
+                console.error('Ошибка загрузки информации о чате:', error); 
+            }
         }
         
         function closeChat() {
@@ -736,12 +821,23 @@
             currentChatUser = null;
             document.getElementById('chatsListCard').style.display = 'block';
             document.getElementById('chatWindow').style.display = 'none';
-            if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+            if (refreshInterval) { 
+                clearInterval(refreshInterval); 
+                refreshInterval = null; 
+            }
             loadChats();
         }
         
-        function viewChatUserProfile() { if (currentChatUser) { closeChat(); viewUserProfile(currentChatUser.id); } }
-        function showChatMenu() { alert('🚧 В разработке: очистка чата, уведомления, блокировка'); }
+        function viewChatUserProfile() { 
+            if (currentChatUser) { 
+                closeChat(); 
+                viewUserProfile(currentChatUser.id); 
+            } 
+        }
+        
+        function showChatMenu() { 
+            alert('🚧 В разработке: очистка чата, уведомления, блокировка'); 
+        }
 
         async function loadMessages() {
             if (!currentChat) return;
@@ -752,8 +848,9 @@
                 const messagesDiv = document.getElementById('chatMessages');
                 const wasAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 100;
                 
-                if (messages.length === 0) messagesDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет сообщений. Напишите что-нибудь!</div>';
-                else {
+                if (messages.length === 0) {
+                    messagesDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет сообщений. Напишите что-нибудь!</div>';
+                } else {
                     messagesDiv.innerHTML = messages.map(msg => `
                         <div class="message ${msg.sender_id === currentUser?.user?.id ? 'sent' : ''}">
                             <div class="message-bubble">
@@ -765,7 +862,9 @@
                     `).join('');
                     if (wasAtBottom) messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 }
-            } catch (error) { console.error('Ошибка загрузки сообщений:', error); }
+            } catch (error) { 
+                console.error('Ошибка загрузки сообщений:', error); 
+            }
         }
 
         async function sendMessage() {
@@ -779,9 +878,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content })
                 });
-                if (res.ok) { input.value = ''; await loadMessages(); loadChats(); }
-                else alert('Ошибка отправки сообщения');
-            } catch (error) { console.error('Ошибка отправки сообщения:', error); }
+                if (res.ok) { 
+                    input.value = ''; 
+                    await loadMessages(); 
+                    loadChats(); 
+                } else {
+                    const error = await res.json();
+                    alert('Ошибка отправки сообщения: ' + (error.error || 'Неизвестная ошибка'));
+                }
+            } catch (error) { 
+                console.error('Ошибка отправки сообщения:', error); 
+                alert('Ошибка отправки сообщения');
+            }
         }
 
         async function loadProfile() {
@@ -791,19 +899,24 @@
                 const data = await res.json();
                 currentUser = data;
                 document.getElementById('userName').textContent = data.profile?.username || data.user.email.split('@')[0];
-            } catch (error) { console.error('Ошибка загрузки профиля:', error); window.location.href = '/login.html'; }
+            } catch (error) { 
+                console.error('Ошибка загрузки профиля:', error); 
+                window.location.href = '/login.html'; 
+            }
         }
 
         function openEditProfile() {
+            closeUserProfile();
             document.getElementById('editModal').classList.add('active');
             document.getElementById('editUsername').value = currentUser?.profile?.username || '';
             document.getElementById('editFullName').value = currentUser?.profile?.full_name || '';
             document.getElementById('editBio').value = currentUser?.profile?.bio || '';
             document.getElementById('editWebsite').value = currentUser?.profile?.website || '';
-            closeUserProfile();
         }
 
-        function closeEditProfile() { document.getElementById('editModal').classList.remove('active'); }
+        function closeEditProfile() { 
+            document.getElementById('editModal').classList.remove('active'); 
+        }
 
         async function saveProfile() {
             const data = {
@@ -819,14 +932,31 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                if (res.ok) { closeEditProfile(); await loadProfile(); await renderMyProfile(); alert('Профиль успешно обновлен!'); }
-                else alert('Ошибка сохранения профиля');
-            } catch (error) { console.error('Ошибка сохранения:', error); alert('Ошибка сохранения профиля'); }
+                if (res.ok) { 
+                    closeEditProfile(); 
+                    await loadProfile(); 
+                    await renderMyProfile(); 
+                    alert('Профиль успешно обновлен!'); 
+                } else {
+                    alert('Ошибка сохранения профиля');
+                }
+            } catch (error) { 
+                console.error('Ошибка сохранения:', error); 
+                alert('Ошибка сохранения профиля');
+            }
         }
 
-        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function escapeHtml(text) { 
+            if (!text) return ''; 
+            const div = document.createElement('div'); 
+            div.textContent = text; 
+            return div.innerHTML; 
+        }
 
-        async function init() { await loadProfile(); await loadFeed(); }
+        async function init() { 
+            await loadProfile(); 
+            await loadFeed(); 
+        }
         
         document.addEventListener('DOMContentLoaded', init);
     </script>
