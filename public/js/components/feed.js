@@ -26,7 +26,21 @@ export async function renderFeed(container) {
                 toggleComments(btn.dataset.postId);
             });
         });
-        container.querySelectorAll('.post-stat-likes').forEach(btn => {
+        
+        // Обработчики для меню постов
+        container.querySelectorAll('.post-menu-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const postId = btn.dataset.postId;
+                const menu = document.getElementById(`post-menu-${postId}`);
+                document.querySelectorAll('.post-menu-dropdown').forEach(m => {
+                    if (m.id !== `post-menu-${postId}`) m.style.display = 'none';
+                });
+                menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            });
+        });
+        
+        container.querySelectorAll('.post-likes-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 showLikesModal(btn.dataset.postId);
@@ -39,14 +53,24 @@ export async function renderFeed(container) {
 }
 
 function renderPost(post) {
+    const isOwnPost = post.user_id === state.currentUser?.user?.id;
     return `
         <div class="post" data-post-id="${post.id}">
             <div class="post-header">
                 <div class="post-avatar" onclick="window.viewUserProfile('${post.user_id}')" style="cursor: pointer;">${(post.profiles?.username?.[0] || 'U').toUpperCase()}</div>
-                <div>
+                <div style="flex: 1;">
                     <div class="post-author" onclick="window.viewUserProfile('${post.user_id}')" style="cursor: pointer;">${escapeHtml(post.profiles?.username || 'Пользователь')}</div>
-                    <div class="post-time">${formatDate(post.created_at)}</div>
+                    <div class="post-time">${formatDate(post.created_at)}${post.edited_at ? ' (изменено)' : ''}</div>
                 </div>
+                ${isOwnPost ? `
+                    <div class="post-menu" style="position: relative;">
+                        <button class="post-menu-btn" data-post-id="${post.id}" style="background: none; border: none; color: #A1A1AA; cursor: pointer; font-size: 18px; padding: 4px 8px;">⋮</button>
+                        <div class="post-menu-dropdown" id="post-menu-${post.id}" style="display: none; position: absolute; right: 0; top: 100%; background: #2A2A2A; border-radius: 12px; padding: 8px 0; min-width: 150px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                            <button class="post-menu-item" onclick="window.editPost('${post.id}')" style="display: block; width: 100%; padding: 8px 16px; background: none; border: none; color: white; text-align: left; cursor: pointer;">✏️ Редактировать</button>
+                            <button class="post-menu-item" onclick="window.deletePost('${post.id}')" style="display: block; width: 100%; padding: 8px 16px; background: none; border: none; color: #EF4444; text-align: left; cursor: pointer;">🗑️ Удалить</button>
+                        </div>
+                    </div>
+                ` : ''}
             </div>
             <div class="post-content">${escapeHtml(post.content)}</div>
             <div class="post-stats">
@@ -56,15 +80,8 @@ function renderPost(post) {
                 <div class="post-stat post-stat-comment" data-post-id="${post.id}">
                     💬 <span class="comments-count">${post.comments_count || 0}</span>
                 </div>
-                <div class="post-stat post-stat-likes" data-post-id="${post.id}" style="cursor: pointer; margin-left: auto;">
+                <div class="post-stat post-likes-btn" data-post-id="${post.id}" style="cursor: pointer; margin-left: auto;">
                     👥
-                </div>
-            </div>
-            <div class="post-menu" style="position: relative; margin-left: auto;">
-                <button class="post-menu-btn" data-post-id="${post.id}" style="background: none; border: none; color: #A1A1AA; cursor: pointer; font-size: 18px;">⋮</button>
-                <div class="post-menu-dropdown" id="post-menu-${post.id}" style="display: none; position: absolute; right: 0; background: #2A2A2A; border-radius: 12px; padding: 8px 0; min-width: 150px; z-index: 10;">
-                    <button class="post-menu-item" onclick="window.editPost('${post.id}')" style="display: block; width: 100%; padding: 8px 16px; background: none; border: none; color: white; text-align: left; cursor: pointer;">✏️ Редактировать</button>
-                    <button class="post-menu-item" onclick="window.deletePost('${post.id}')" style="display: block; width: 100%; padding: 8px 16px; background: none; border: none; color: #EF4444; text-align: left; cursor: pointer;">🗑️ Удалить</button>
                 </div>
             </div>
             <div class="comments-section" id="comments-${post.id}" style="display: none;">
@@ -216,6 +233,36 @@ window.submitReply = async (parentCommentId, postId) => {
     }
 };
 
+window.editPost = async (postId) => {
+    const post = document.querySelector(`.post[data-post-id="${postId}"]`);
+    const contentDiv = post.querySelector('.post-content');
+    const oldContent = contentDiv.textContent;
+    
+    const newContent = prompt('Редактировать пост:', oldContent);
+    if (newContent && newContent.trim() && newContent !== oldContent) {
+        try {
+            await postsAPI.update(postId, newContent);
+            contentDiv.textContent = newContent;
+            showToast('✅ Пост обновлен', 'success');
+            await renderFeed(document.getElementById('postsFeed'));
+        } catch (error) {
+            showToast('Ошибка редактирования', 'error');
+        }
+    }
+};
+
+window.deletePost = async (postId) => {
+    if (confirm('Удалить пост?')) {
+        try {
+            await postsAPI.delete(postId);
+            document.querySelector(`.post[data-post-id="${postId}"]`).remove();
+            showToast('✅ Пост удален', 'success');
+        } catch (error) {
+            showToast('Ошибка удаления', 'error');
+        }
+    }
+};
+
 async function showLikesModal(postId) {
     try {
         const likes = await postsAPI.getPostLikes(postId);
@@ -226,7 +273,6 @@ async function showLikesModal(postId) {
             content.innerHTML = '<div style="text-align: center; padding: 20px;">Нет лайков</div>';
         } else {
             content.innerHTML = likes.map(like => {
-                // Форматируем дату правильно
                 let dateStr = 'недавно';
                 if (like.created_at) {
                     const date = new Date(like.created_at);
@@ -254,60 +300,13 @@ async function showLikesModal(postId) {
     }
 }
 
-window.editPost = async (postId) => {
-    const post = document.querySelector(`.post[data-post-id="${postId}"]`);
-    const contentDiv = post.querySelector('.post-content');
-    const oldContent = contentDiv.textContent;
-    
-    const newContent = prompt('Редактировать пост:', oldContent);
-    if (newContent && newContent.trim() && newContent !== oldContent) {
-        try {
-            await postsAPI.update(postId, newContent);
-            contentDiv.textContent = newContent;
-            showToast('✅ Пост обновлен', 'success');
-        } catch (error) {
-            showToast('Ошибка редактирования', 'error');
-        }
-    }
-};
-
-window.deletePost = async (postId) => {
-    if (confirm('Удалить пост?')) {
-        try {
-            await postsAPI.delete(postId);
-            document.querySelector(`.post[data-post-id="${postId}"]`).remove();
-            showToast('✅ Пост удален', 'success');
-        } catch (error) {
-            showToast('Ошибка удаления', 'error');
-        }
-    }
-};
-
-// Обработчики меню
-document.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('post-menu-btn')) {
-        document.querySelectorAll('.post-menu-dropdown').forEach(menu => {
-            menu.style.display = 'none';
-        });
-    }
-});
-
-// В renderPost добавить обработчик для кнопки меню (после рендера)
-// Или добавить глобальный обработчик
-setTimeout(() => {
-    document.querySelectorAll('.post-menu-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const postId = btn.dataset.postId;
-            const menu = document.getElementById(`post-menu-${postId}`);
-            document.querySelectorAll('.post-menu-dropdown').forEach(m => {
-                if (m.id !== `post-menu-${postId}`) m.style.display = 'none';
-            });
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-        });
-    });
-}, 100);
-
 window.closeLikesModal = () => {
     document.getElementById('likesModal').classList.remove('active');
 };
+
+// Закрываем меню постов при клике вне
+document.addEventListener('click', () => {
+    document.querySelectorAll('.post-menu-dropdown').forEach(menu => {
+        menu.style.display = 'none';
+    });
+});

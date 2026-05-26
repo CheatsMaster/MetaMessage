@@ -93,18 +93,20 @@ async function loadMessages() {
         } else {
             messagesDiv.innerHTML = messages.map(msg => `
                 <div class="message ${msg.sender_id === state.currentUser?.user?.id ? 'sent' : ''}" data-message-id="${msg.id}" data-chat-id="${state.currentChat}">
-                    <div class="message-bubble" style="position: relative;">
+                    <div class="message-bubble" style="position: relative; display: inline-block; min-width: 80px;">
                         ${msg.sender_id === state.currentUser?.user?.id ? `
-                            <button class="message-menu-btn" style="position: absolute; top: 5px; right: 5px; background: none; border: none; color: #A1A1AA; cursor: pointer; font-size: 14px;">⋮</button>
-                            <div class="message-menu-dropdown" id="msg-menu-${msg.id}" style="display: none; position: absolute; right: 25px; top: 0; background: #2A2A2A; border-radius: 12px; padding: 8px 0; min-width: 120px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                                <button class="msg-edit-btn" data-message-id="${msg.id}" data-content="${escapeHtml(msg.content).replace(/"/g, '&quot;')}" style="display: block; width: 100%; padding: 6px 12px; background: none; border: none; color: white; text-align: left; cursor: pointer;">✏️ Редактировать</button>
-                                <button class="msg-delete-btn" data-message-id="${msg.id}" style="display: block; width: 100%; padding: 6px 12px; background: none; border: none; color: #EF4444; text-align: left; cursor: pointer;">🗑️ Удалить</button>
+                            <button class="message-menu-btn" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #C084FC; cursor: pointer; font-size: 14px; z-index: 5;">⋮</button>
+                            <div class="message-menu-dropdown" id="msg-menu-${msg.id}" style="display: none; position: absolute; right: 25px; top: 0; background: #2A2A2A; border-radius: 12px; padding: 8px 0; min-width: 130px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                                <button class="msg-edit-btn" data-message-id="${msg.id}" data-content="${escapeHtml(msg.content).replace(/"/g, '&quot;')}" style="display: block; width: 100%; padding: 8px 16px; background: none; border: none; color: white; text-align: left; cursor: pointer; font-size: 14px;">✏️ Редактировать</button>
+                                <button class="msg-delete-btn" data-message-id="${msg.id}" style="display: block; width: 100%; padding: 8px 16px; background: none; border: none; color: #EF4444; text-align: left; cursor: pointer; font-size: 14px;">🗑️ Удалить</button>
                             </div>
                         ` : ''}
                         <div style="font-size: 11px; margin-bottom: 4px; color: #C084FC;">${escapeHtml(msg.profiles?.username)}</div>
-                        <div class="message-content">${escapeHtml(msg.content)}</div>
-                        ${msg.edited_at ? `<div style="font-size: 9px; margin-top: 4px; color: #A1A1AA;">(изменено)</div>` : ''}
-                        <div style="font-size: 10px; margin-top: 4px; color: #A1A1AA;">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                        <div class="message-content" style="word-break: break-word; white-space: normal; line-height: 1.4;">${escapeHtml(msg.content)}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; gap: 8px;">
+                            <div style="font-size: 10px; color: #A1A1AA;">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                            ${msg.edited_at ? `<div style="font-size: 10px; color: #A1A1AA;">(изменено)</div>` : ''}
+                        </div>
                     </div>
                 </div>
             `).join('');
