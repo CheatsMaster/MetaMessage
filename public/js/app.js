@@ -77,16 +77,42 @@ window.openSettings = () => {
 };
 
 async function init() {
-    console.log('🔍 Проверка авторизации...');
+    console.log('🔍 1. Проверка авторизации...');
+    console.log('🔍 2. Текущий URL:', window.location.href);
+    
     try {
+        console.log('🔍 3. Отправляем запрос /api/auth/me...');
         const data = await authAPI.me();
-        console.log('✅ Пользователь авторизован:', data);
+        console.log('✅ 4. Пользователь авторизован:', data);
+        console.log('✅ 5. Данные профиля:', data.profile);
+        
         setState({ currentUser: data });
-        document.getElementById('userName').textContent = data.profile?.username || data.user.email.split('@')[0];
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl) {
+            userNameEl.textContent = data.profile?.username || data.user.email.split('@')[0];
+        }
+        
+        console.log('🔍 6. Загружаем ленту...');
         await renderFeed(document.getElementById('postsFeed'));
+        console.log('✅ 7. Инициализация завершена успешно!');
+        
     } catch (error) {
-        console.error('❌ Ошибка авторизации:', error);
-        window.location.href = '/login.html';
+        console.error('❌ ОШИБКА авторизации:', error);
+        console.error('❌ Детали ошибки:', error.message);
+        console.error('❌ Полный объект ошибки:', error);
+        
+        // Временно убираем редирект, чтобы увидеть ошибку
+        // window.location.href = '/login.html';
+        
+        // Показываем ошибку на странице
+        const feedContainer = document.getElementById('postsFeed');
+        if (feedContainer) {
+            feedContainer.innerHTML = `<div class="card" style="text-align: center; color: #EF4444;">
+                <h3>❌ Ошибка авторизации</h3>
+                <p>${error.message}</p>
+                <button class="btn-primary" onclick="window.location.href='/login.html'">Перейти на страницу входа</button>
+            </div>`;
+        }
     }
 }
 
