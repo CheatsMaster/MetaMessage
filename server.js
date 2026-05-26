@@ -5,6 +5,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
+import postsRoutes from './routes/posts.js';
+import chatsRoutes from './routes/chats.js';
+import friendsRoutes from './routes/friends.js';
 
 dotenv.config();
 
@@ -20,8 +23,11 @@ app.use(express.static('public'));
 // API роуты
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/posts', postsRoutes);
+app.use('/api/chats', chatsRoutes);
+app.use('/api/friends', friendsRoutes);
 
-// Все остальные маршруты отдаём index.html (для SPA)
+// Все остальные маршруты отдаём index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -29,5 +35,4 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Сервер запущен на http://localhost:${PORT}`);
-  console.log(`📱 Открой в браузере: http://localhost:${PORT}`);
 });
