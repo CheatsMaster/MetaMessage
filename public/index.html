@@ -5,6 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Messenger | Социальная сеть</title>
     <link rel="stylesheet" href="/style.css">
+    <style>
+        /* Дополнительные стили для чата */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        
+        .chat-user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        
+        .back-btn {
+            background: rgba(124, 58, 237, 0.2);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 12px;
+            color: #C084FC;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .back-btn:hover {
+            background: rgba(124, 58, 237, 0.4);
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .chat-action-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #A1A1AA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #C084FC;
+        }
+        
+        /* Адаптация для мобильных */
+        @media (max-width: 768px) {
+            .chat-header {
+                flex-wrap: wrap;
+            }
+        }
+        
+        /* Анимация новых сообщений */
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.new {
+            animation: messageAppear 0.3s ease;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
@@ -45,6 +136,7 @@
     </div>
 
     <div class="container">
+        <!-- Лента постов -->
         <div id="feedPage" class="page active">
             <div class="card post-form">
                 <textarea id="postContent" class="post-input" rows="3" placeholder="Что у вас нового?"></textarea>
@@ -55,23 +147,41 @@
             <div id="postsFeed"></div>
         </div>
 
+        <!-- Чаты -->
         <div id="chatsPage" class="page">
-            <div class="card">
+            <div class="card" id="chatsListCard">
                 <h3 style="margin-bottom: 20px;">💬 Мои чаты</h3>
                 <div id="chatsList" class="chats-list"></div>
             </div>
             <div id="chatWindow" style="display: none;">
                 <div class="card">
-                    <h3 id="chatTitle" style="margin-bottom: 20px;">Чат</h3>
+                    <div class="chat-header">
+                        <button class="back-btn" onclick="closeChat()">
+                            ← Назад
+                        </button>
+                        <div class="chat-user-info" id="chatUserInfo" onclick="viewChatUserProfile()">
+                            <div class="chat-user-avatar" id="chatAvatar">👤</div>
+                            <div>
+                                <div style="font-weight: 600;" id="chatUserName">Загрузка...</div>
+                                <div style="font-size: 11px; color: #A1A1AA;" id="chatUserStatus">онлайн</div>
+                            </div>
+                        </div>
+                        <div class="chat-actions">
+                            <button class="chat-action-btn" onclick="showChatMenu()" title="Меню">
+                                ⋮
+                            </button>
+                        </div>
+                    </div>
                     <div id="chatMessages" class="chat-messages"></div>
                     <div class="comment-input">
-                        <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                        <input type="text" id="messageInput" placeholder="Введите сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
                         <button class="btn-primary" onclick="sendMessage()">Отправить</button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Поиск пользователей -->
         <div id="searchPage" class="page">
             <div class="search-bar">
                 <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск пользователей..." onkeyup="searchUsers()">
@@ -79,6 +189,7 @@
             <div id="searchResults"></div>
         </div>
 
+        <!-- Мой профиль -->
         <div id="profilePage" class="page">
             <div class="card">
                 <div class="profile-header">
@@ -118,14 +229,16 @@
                 <button onclick="closeUserProfile()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             <div id="userProfileContent"></div>
-            <button class="btn-primary" onclick="startChatFromProfile()" style="width: 100%; margin-top: 20px;">💬 Написать сообщение</button>
+            <div id="profileActionButton"></div>
         </div>
     </div>
 
     <script>
         let currentUser = null;
         let currentChat = null;
+        let currentChatUser = null;
         let viewedUser = null;
+        let refreshInterval = null;
 
         function switchPage(pageName) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -134,11 +247,15 @@
             event.target.closest('.nav-tab').classList.add('active');
             
             if (pageName === 'feed') loadFeed();
-            if (pageName === 'chats') loadChats();
+            if (pageName === 'chats') {
+                closeChat();
+                loadChats();
+            }
             if (pageName === 'profile') loadProfile();
         }
 
         async function logout() {
+            if (refreshInterval) clearInterval(refreshInterval);
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login.html';
         }
@@ -157,6 +274,7 @@
         }
 
         function renderPost(post) {
+            const isCurrentUser = post.user_id === currentUser?.user?.id;
             return `
                 <div class="post" data-post-id="${post.id}">
                     <div class="post-header">
@@ -260,7 +378,6 @@
             if (res.ok) {
                 input.value = '';
                 await loadComments(postId);
-                // Обновляем счетчик комментариев в посте
                 loadFeed();
             } else {
                 alert('Ошибка отправки комментария');
@@ -276,9 +393,11 @@
             }
             
             try {
+                console.log('Поиск:', query);
                 const res = await fetch(`/api/friends/search?q=${encodeURIComponent(query)}`);
                 if (!res.ok) throw new Error('Ошибка поиска');
                 const users = await res.json();
+                console.log('Найдено пользователей:', users.length);
                 
                 if (users.length === 0) {
                     document.getElementById('searchResults').innerHTML = '<div class="card" style="text-align: center;">Пользователи не найдены</div>';
@@ -311,6 +430,8 @@
                 const user = await res.json();
                 viewedUser = user;
                 
+                const isOwnProfile = userId === currentUser?.user?.id;
+                
                 const content = document.getElementById('userProfileContent');
                 content.innerHTML = `
                     <div style="text-align: center;">
@@ -322,6 +443,13 @@
                         <div class="status" style="margin-top: 16px;">🟢 ${user.status || 'online'}</div>
                     </div>
                 `;
+                
+                const buttonDiv = document.getElementById('profileActionButton');
+                if (isOwnProfile) {
+                    buttonDiv.innerHTML = '<button class="btn-secondary" onclick="closeUserProfile()" style="width: 100%; margin-top: 20px;">Закрыть</button>';
+                } else {
+                    buttonDiv.innerHTML = '<button class="btn-primary" onclick="startChatFromProfile()" style="width: 100%; margin-top: 20px;">💬 Написать сообщение</button>';
+                }
                 
                 document.getElementById('userProfileModal').classList.add('active');
             } catch (error) {
@@ -336,7 +464,7 @@
         }
 
         async function startChatFromProfile() {
-            if (viewedUser) {
+            if (viewedUser && viewedUser.id !== currentUser?.user?.id) {
                 await startChat(viewedUser.id);
                 closeUserProfile();
             }
@@ -348,6 +476,7 @@
                 const res = await fetch('/api/chats');
                 if (!res.ok) throw new Error('Ошибка загрузки чатов');
                 const chats = await res.json();
+                console.log('Загружено чатов:', chats.length);
                 
                 if (chats.length === 0) {
                     document.getElementById('chatsList').innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет чатов. Начните диалог через поиск!</div>';
@@ -370,6 +499,7 @@
 
         async function startChat(userId) {
             try {
+                console.log('Начинаем чат с:', userId);
                 const res = await fetch(`/api/chats/private/${userId}`, { method: 'POST' });
                 if (!res.ok) throw new Error('Ошибка создания чата');
                 const chat = await res.json();
@@ -383,11 +513,77 @@
 
         async function openChat(chatId) {
             currentChat = chatId;
+            
+            // Скрываем список чатов, показываем окно чата
+            document.getElementById('chatsListCard').style.display = 'none';
             document.getElementById('chatWindow').style.display = 'block';
-            document.getElementById('chatTitle').textContent = 'Чат #' + chatId.substring(0, 8);
+            
+            // Загружаем информацию о собеседнике
+            await loadChatUserInfo(chatId);
             await loadMessages();
-            // Обновляем список чатов
+            
+            // Запускаем автообновление каждые 3 секунды
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(() => {
+                if (currentChat) loadMessages();
+            }, 3000);
+        }
+        
+        async function loadChatUserInfo(chatId) {
+            try {
+                // Получаем участников чата
+                const res = await fetch(`/api/chats/${chatId}/participants`);
+                // Если нет эндпоинта, получаем через сообщения
+                const messagesRes = await fetch(`/api/chats/${chatId}/messages`);
+                const messages = await messagesRes.json();
+                
+                // Находим отправителя, который не текущий пользователь
+                const otherSender = messages.find(m => m.sender_id !== currentUser?.user?.id);
+                if (otherSender) {
+                    currentChatUser = otherSender.profiles;
+                } else {
+                    // Если сообщений нет, получаем через список участников
+                    const participantsRes = await fetch(`/api/chats/${chatId}/participants`);
+                    if (participantsRes.ok) {
+                        const participants = await participantsRes.json();
+                        const otherUser = participants.find(p => p.user_id !== currentUser?.user?.id);
+                        if (otherUser) {
+                            const userRes = await fetch(`/api/users/${otherUser.user_id}`);
+                            currentChatUser = await userRes.json();
+                        }
+                    }
+                }
+                
+                if (currentChatUser) {
+                    document.getElementById('chatUserName').textContent = currentChatUser.username || 'Пользователь';
+                    document.getElementById('chatAvatar').textContent = (currentChatUser.username?.[0] || 'U').toUpperCase();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки информации о чате:', error);
+                document.getElementById('chatUserName').textContent = 'Чат';
+            }
+        }
+        
+        function closeChat() {
+            currentChat = null;
+            currentChatUser = null;
+            document.getElementById('chatsListCard').style.display = 'block';
+            document.getElementById('chatWindow').style.display = 'none';
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
             loadChats();
+        }
+        
+        function viewChatUserProfile() {
+            if (currentChatUser) {
+                viewUserProfile(currentChatUser.id);
+            }
+        }
+        
+        function showChatMenu() {
+            alert('🚧 В разработке: очистка чата, уведомления, блокировка');
         }
 
         async function loadMessages() {
@@ -397,11 +593,12 @@
                 if (!res.ok) throw new Error('Ошибка загрузки сообщений');
                 const messages = await res.json();
                 const messagesDiv = document.getElementById('chatMessages');
+                const oldMessageCount = messagesDiv.children.length;
                 
                 if (messages.length === 0) {
                     messagesDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет сообщений. Напишите что-нибудь!</div>';
                 } else {
-                    messagesDiv.innerHTML = messages.map(msg => `
+                    const newMessagesHtml = messages.map(msg => `
                         <div class="message ${msg.sender_id === currentUser?.user?.id ? 'sent' : ''}">
                             <div class="message-bubble">
                                 <div style="font-size: 11px; margin-bottom: 4px; color: #C084FC;">${escapeHtml(msg.profiles?.username)}</div>
@@ -410,8 +607,14 @@
                             </div>
                         </div>
                     `).join('');
+                    
+                    // Прокручиваем вниз только если это новое сообщение
+                    const wasAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 100;
+                    messagesDiv.innerHTML = newMessagesHtml;
+                    if (wasAtBottom || oldMessageCount === 0) {
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }
                 }
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
             } catch (error) {
                 console.error('Ошибка загрузки сообщений:', error);
                 document.getElementById('chatMessages').innerHTML = '<div style="color: red;">Ошибка загрузки сообщений</div>';
@@ -433,8 +636,11 @@
                 if (res.ok) {
                     input.value = '';
                     await loadMessages();
+                    // Обновляем список чатов чтобы показать последнее сообщение
+                    loadChats();
                 } else {
-                    alert('Ошибка отправки сообщения');
+                    const error = await res.json();
+                    alert('Ошибка отправки сообщения: ' + (error.error || 'Неизвестная ошибка'));
                 }
             } catch (error) {
                 console.error('Ошибка отправки сообщения:', error);
@@ -508,16 +714,14 @@
             return div.innerHTML;
         }
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Добавляем эндпоинт для получения участников чата в chats.js
+        async function init() {
             await loadProfile();
             await loadFeed();
-            
-            // Загружаем чаты если мы на странице чатов
-            if (document.getElementById('chatsPage').classList.contains('active')) {
-                await loadChats();
-            }
-        });
+        }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>

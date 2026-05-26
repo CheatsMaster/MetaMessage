@@ -212,4 +212,23 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/:chatId/participants', authenticateToken, async (req, res) => {
+  const { chatId } = req.params;
+  
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('chat_participants')
+      .select(`
+        user_id,
+        profiles:user_id (id, username, avatar_url, full_name, status)
+      `)
+      .eq('chat_id', chatId);
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
