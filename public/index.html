@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Messenger | Современный мессенджер</title>
+    <title>Messenger | Социальная сеть</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -19,29 +19,21 @@
             </div>
             
             <div class="nav-tabs">
-                <button class="nav-tab active" onclick="switchPage('home')">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                    </svg>
-                    <span>Главная</span>
+                <button class="nav-tab active" onclick="switchPage('feed')">
+                    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    <span>Лента</span>
+                </button>
+                <button class="nav-tab" onclick="switchPage('chats')">
+                    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                    <span>Чаты</span>
+                </button>
+                <button class="nav-tab" onclick="switchPage('search')">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <span>Поиск</span>
                 </button>
                 <button class="nav-tab" onclick="switchPage('profile')">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     <span>Профиль</span>
-                </button>
-                <button class="nav-tab" onclick="switchPage('messages')">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-                    </svg>
-                    <span>Сообщения</span>
-                </button>
-                <button class="nav-tab" onclick="switchPage('settings')">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.33-.02-.64-.06-.94l2.02-1.58c.18-.14.23-.38.12-.56l-1.89-3.28c-.12-.19-.36-.26-.56-.18l-2.38.96c-.5-.38-1.06-.68-1.66-.88L14.45 3.5c-.04-.2-.2-.34-.4-.34h-3.78c-.2 0-.36.14-.4.34l-.3 2.52c-.6.2-1.16.5-1.66.88l-2.38-.96c-.2-.08-.44-.01-.56.18l-1.89 3.28c-.12.19-.07.42.12.56l2.02 1.58c-.04.3-.06.61-.06.94 0 .33.02.64.06.94l-2.02 1.58c-.18.14-.23.38-.12.56l1.89 3.28c.12.19.36.26.56.18l2.38-.96c.5.38 1.06.68 1.66.88l.3 2.52c.04.2.2.34.4.34h3.78c.2 0 .36-.14.4-.34l.3-2.52c.6-.2 1.16-.5 1.66-.88l2.38.96c.2.08.44.01.56-.18l1.89-3.28c.12-.19.07-.42-.12-.56l-2.02-1.58zM12 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
-                    </svg>
-                    <span>Настройки</span>
                 </button>
             </div>
             
@@ -53,154 +45,322 @@
     </div>
 
     <div class="container">
-        <!-- Главная страница -->
-        <div id="homePage" class="page active">
-            <div class="welcome-banner">
-                <h1>✨ Добро пожаловать в Messenger!</h1>
-                <p>Современный мессенджер с красивым дизайном и мгновенными сообщениями</p>
+        <div id="feedPage" class="page active">
+            <div class="card post-form">
+                <textarea id="postContent" class="post-input" rows="3" placeholder="Что у вас нового?"></textarea>
+                <div class="post-actions">
+                    <button class="btn-primary" onclick="createPost()">Опубликовать</button>
+                </div>
             </div>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">💬</div>
-                    <h3>Мгновенные сообщения</h3>
-                    <p>Общайтесь с друзьями в реальном времени</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3>Стильный дизайн</h3>
-                    <p>Современный интерфейс с тёмной темой</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Безопасность</h3>
-                    <p>Ваши данные надёжно защищены</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3>Адаптивность</h3>
-                    <p>Работает на всех устройствах</p>
+            <div id="postsFeed"></div>
+        </div>
+
+        <div id="chatsPage" class="page">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">💬 Мои чаты</h3>
+                <div id="chatsList" class="chats-list"></div>
+            </div>
+            <div id="chatWindow" style="display: none;">
+                <div class="card">
+                    <h3 id="chatTitle" style="margin-bottom: 20px;">Чат</h3>
+                    <div id="chatMessages" class="chat-messages"></div>
+                    <div class="comment-input">
+                        <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                        <button class="btn-primary" onclick="sendMessage()">Отправить</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Профиль -->
+        <div id="searchPage" class="page">
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск пользователей..." onkeyup="searchUsers()">
+            </div>
+            <div id="searchResults"></div>
+        </div>
+
         <div id="profilePage" class="page">
             <div class="card">
                 <div class="profile-header">
-                    <div class="avatar" id="avatar">👤</div>
+                    <div class="profile-avatar" id="profileAvatar">👤</div>
                     <div class="profile-info">
                         <h2 id="profileUsername">Загрузка...</h2>
-                        <div class="email" id="profileEmail">email@example.com</div>
-                        <div class="status">🟢 Онлайн</div>
-                    </div>
-                </div>
-                
-                <div class="profile-stats">
-                    <div class="stat-card">
-                        <div class="stat-number" id="messagesCount">0</div>
-                        <div class="stat-label">Сообщений</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="chatsCount">0</div>
-                        <div class="stat-label">Чатов</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="friendsCount">0</div>
-                        <div class="stat-label">Друзей</div>
+                        <div class="email" id="profileEmail"></div>
+                        <div class="status" id="profileStatus">🟢 Онлайн</div>
+                        <div class="profile-bio" id="profileBio"></div>
+                        <button class="btn-secondary edit-btn" onclick="openEditProfile()">✏️ Редактировать профиль</button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Сообщения (временная заглушка) -->
-        <div id="messagesPage" class="page">
-            <div class="card" style="text-align: center; padding: 60px 20px;">
-                <div style="font-size: 64px; margin-bottom: 20px;">💬</div>
-                <h2 style="margin-bottom: 12px;">Скоро здесь будет чат</h2>
-                <p style="color: #A1A1AA;">Мы работаем над добавлением реальных сообщений</p>
-            </div>
-        </div>
-
-        <!-- Настройки (временная заглушка) -->
-        <div id="settingsPage" class="page">
-            <div class="card" style="text-align: center; padding: 60px 20px;">
-                <div style="font-size: 64px; margin-bottom: 20px;">⚙️</div>
-                <h2 style="margin-bottom: 12px;">Настройки</h2>
-                <p style="color: #A1A1AA;">Здесь можно будет настроить тему, уведомления и приватность</p>
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Редактировать профиль</h3>
+            <input type="text" id="editUsername" placeholder="Имя пользователя">
+            <input type="text" id="editFullName" placeholder="Полное имя">
+            <textarea id="editBio" rows="3" placeholder="О себе"></textarea>
+            <input type="text" id="editWebsite" placeholder="Веб-сайт">
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn-secondary" onclick="closeEditProfile()">Отмена</button>
+                <button class="btn-primary" onclick="saveProfile()">Сохранить</button>
             </div>
         </div>
     </div>
 
     <script>
         let currentUser = null;
-        
+        let currentChat = null;
+
         function switchPage(pageName) {
-            // Скрываем все страницы
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            // Показываем выбранную
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.getElementById(`${pageName}Page`).classList.add('active');
-            
-            // Обновляем активную вкладку
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
             event.target.closest('.nav-tab').classList.add('active');
+            
+            if (pageName === 'feed') loadFeed();
+            if (pageName === 'chats') loadChats();
+            if (pageName === 'profile') loadProfile();
         }
-        
+
         async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login.html';
+        }
+
+        async function loadFeed() {
             try {
-                await fetch('/api/auth/logout', { method: 'POST' });
-                window.location.href = '/login.html';
+                const res = await fetch('/api/posts/feed');
+                const posts = await res.json();
+                document.getElementById('postsFeed').innerHTML = posts.map(post => renderPost(post)).join('');
             } catch (error) {
-                console.error('Ошибка выхода:', error);
+                console.error('Ошибка загрузки ленты:', error);
             }
         }
-        
-        async function loadUserProfile() {
-            try {
-                const response = await fetch('/api/auth/me');
-                if (!response.ok) {
-                    window.location.href = '/login.html';
-                    return;
-                }
-                
-                const data = await response.json();
-                currentUser = data;
-                
-                // Обновляем имя в шапке
-                const userNameSpan = document.getElementById('userName');
-                userNameSpan.textContent = data.profile?.username || data.user.email.split('@')[0];
-                
-                // Обновляем профиль
-                document.getElementById('profileUsername').textContent = data.profile?.username || 'Пользователь';
-                document.getElementById('profileEmail').textContent = data.user.email;
-                
-                // Аватар (первая буква имени)
-                const avatarLetter = (data.profile?.username || 'U')[0].toUpperCase();
-                document.getElementById('avatar').textContent = avatarLetter;
-                
-                // Загружаем статистику (заглушка, потом подключим реальную)
-                document.getElementById('messagesCount').textContent = '0';
-                document.getElementById('chatsCount').textContent = '0';
-                document.getElementById('friendsCount').textContent = '0';
-                
-                // Если есть avatar_url, можно подставить
-                if (data.profile?.avatar_url) {
-                    // document.getElementById('avatar').innerHTML = `<img src="${data.profile.avatar_url}" style="width:100%; border-radius:60px;">`;
-                }
-                
-            } catch (error) {
-                console.error('Ошибка загрузки профиля:', error);
-                window.location.href = '/login.html';
+
+        function renderPost(post) {
+            return `
+                <div class="post" data-post-id="${post.id}">
+                    <div class="post-header">
+                        <div class="post-avatar">${(post.profiles?.username?.[0] || 'U').toUpperCase()}</div>
+                        <div>
+                            <div class="post-author">${post.profiles?.username || 'Пользователь'}</div>
+                            <div class="post-time">${new Date(post.created_at).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="post-content">${escapeHtml(post.content)}</div>
+                    <div class="post-stats">
+                        <div class="post-stat ${post.liked_by_user ? 'active' : ''}" onclick="toggleLike('${post.id}')">
+                            ❤️ ${post.likes_count || 0}
+                        </div>
+                        <div class="post-stat" onclick="toggleComments('${post.id}')">
+                            💬 ${post.comments_count || 0}
+                        </div>
+                    </div>
+                    <div class="comments-section" id="comments-${post.id}" style="display: none;">
+                        <div id="comments-list-${post.id}"></div>
+                        <div class="comment-input">
+                            <input type="text" id="comment-input-${post.id}" placeholder="Написать комментарий...">
+                            <button class="btn-secondary" onclick="addComment('${post.id}')">Отправить</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function createPost() {
+            const content = document.getElementById('postContent').value;
+            if (!content.trim()) return;
+            
+            const res = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            
+            if (res.ok) {
+                document.getElementById('postContent').value = '';
+                loadFeed();
             }
         }
-        
-        // Загружаем профиль при старте
-        loadUserProfile();
+
+        async function toggleLike(postId) {
+            await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+            loadFeed();
+        }
+
+        async function toggleComments(postId) {
+            const commentsDiv = document.getElementById(`comments-${postId}`);
+            if (commentsDiv.style.display === 'none') {
+                commentsDiv.style.display = 'block';
+                await loadComments(postId);
+            } else {
+                commentsDiv.style.display = 'none';
+            }
+        }
+
+        async function loadComments(postId) {
+            const res = await fetch(`/api/posts/${postId}/comments`);
+            const comments = await res.json();
+            document.getElementById(`comments-list-${postId}`).innerHTML = comments.map(c => `
+                <div class="comment">
+                    <div class="comment-avatar">${(c.profiles?.username?.[0] || 'U').toUpperCase()}</div>
+                    <div>
+                        <div class="comment-author">${c.profiles?.username}</div>
+                        <div class="comment-content">${escapeHtml(c.content)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function addComment(postId) {
+            const input = document.getElementById(`comment-input-${postId}`);
+            const content = input.value;
+            if (!content.trim()) return;
+            
+            await fetch(`/api/posts/${postId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            
+            input.value = '';
+            loadComments(postId);
+        }
+
+        async function searchUsers() {
+            const query = document.getElementById('searchInput').value;
+            if (query.length < 2) return;
+            
+            const res = await fetch(`/api/friends/search?q=${encodeURIComponent(query)}`);
+            const users = await res.json();
+            
+            document.getElementById('searchResults').innerHTML = users.map(user => `
+                <div class="user-card">
+                    <div class="user-info">
+                        <div class="user-avatar">${(user.username?.[0] || 'U').toUpperCase()}</div>
+                        <div>
+                            <div style="font-weight: 600;">${user.username}</div>
+                            <div style="font-size: 12px; color: #A1A1AA;">${user.full_name || ''}</div>
+                        </div>
+                    </div>
+                    <button class="btn-secondary" onclick="startChat('${user.id}')">💬 Написать</button>
+                </div>
+            `).join('');
+        }
+
+        async function loadChats() {
+            const res = await fetch('/api/chats');
+            const chats = await res.json();
+            document.getElementById('chatsList').innerHTML = chats.map(chat => `
+                <div class="chat-item" onclick="openChat('${chat.id}')">
+                    <div>
+                        <div style="font-weight: 600;">${chat.name || 'Личный чат'}</div>
+                        <div style="font-size: 12px; color: #A1A1AA;">${chat.last_message?.content || 'Нет сообщений'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function startChat(userId) {
+            const res = await fetch(`/api/chats/private/${userId}`, { method: 'POST' });
+            const chat = await res.json();
+            openChat(chat.id);
+            switchPage('chats');
+        }
+
+        async function openChat(chatId) {
+            currentChat = chatId;
+            document.getElementById('chatWindow').style.display = 'block';
+            await loadMessages();
+        }
+
+        async function loadMessages() {
+            if (!currentChat) return;
+            const res = await fetch(`/api/chats/${currentChat}/messages`);
+            const messages = await res.json();
+            const messagesDiv = document.getElementById('chatMessages');
+            messagesDiv.innerHTML = messages.map(msg => `
+                <div class="message ${msg.sender_id === currentUser?.user?.id ? 'sent' : ''}">
+                    <div class="message-bubble">
+                        <div style="font-size: 12px; margin-bottom: 4px;">${msg.profiles?.username}</div>
+                        ${escapeHtml(msg.content)}
+                    </div>
+                </div>
+            `).join('');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value;
+            if (!content.trim() || !currentChat) return;
+            
+            await fetch(`/api/chats/${currentChat}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            
+            input.value = '';
+            await loadMessages();
+        }
+
+        async function loadProfile() {
+            const res = await fetch('/api/auth/me');
+            const data = await res.json();
+            currentUser = data;
+            
+            document.getElementById('profileUsername').textContent = data.profile?.username || 'Пользователь';
+            document.getElementById('profileEmail').textContent = data.user.email;
+            document.getElementById('profileBio').textContent = data.profile?.bio || 'Расскажите о себе';
+            document.getElementById('profileAvatar').textContent = (data.profile?.username?.[0] || 'U').toUpperCase();
+            document.getElementById('userName').textContent = data.profile?.username || data.user.email.split('@')[0];
+        }
+
+        function openEditProfile() {
+            document.getElementById('editModal').classList.add('active');
+            document.getElementById('editUsername').value = currentUser.profile?.username || '';
+            document.getElementById('editFullName').value = currentUser.profile?.full_name || '';
+            document.getElementById('editBio').value = currentUser.profile?.bio || '';
+            document.getElementById('editWebsite').value = currentUser.profile?.website || '';
+        }
+
+        function closeEditProfile() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        async function saveProfile() {
+            const data = {
+                username: document.getElementById('editUsername').value,
+                full_name: document.getElementById('editFullName').value,
+                bio: document.getElementById('editBio').value,
+                website: document.getElementById('editWebsite').value
+            };
+            
+            const res = await fetch('/api/users/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (res.ok) {
+                closeEditProfile();
+                loadProfile();
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProfile();
+            loadFeed();
+        });
     </script>
 </body>
 </html>
