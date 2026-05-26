@@ -15,19 +15,19 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static('public')); // 👈 раздаём статику из папки public
+app.use(express.static('public'));
 
 // API роуты
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 
-// Все остальные маршруты отдаём login.html (для SPA)
+// Все остальные маршруты отдаём index.html (для SPA)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Open http://localhost:${PORT}`);
+  console.log(`✅ Сервер запущен на http://localhost:${PORT}`);
+  console.log(`📱 Открой в браузере: http://localhost:${PORT}`);
 });

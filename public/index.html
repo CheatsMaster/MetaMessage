@@ -2,107 +2,205 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messenger | Главная</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0F0F0F, #1A1A1A);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        
-        .welcome-card {
-            background: rgba(36, 36, 36, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 32px;
-            padding: 48px;
-            text-align: center;
-            max-width: 500px;
-            margin: 20px;
-            border: 1px solid rgba(124, 58, 237, 0.2);
-        }
-        
-        h1 {
-            font-size: 32px;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, #7C3AED, #A78BFA);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        p {
-            color: #A1A1AA;
-            margin-bottom: 24px;
-            font-size: 16px;
-        }
-        
-        .logout-btn {
-            background: linear-gradient(135deg, #7C3AED, #A78BFA);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 16px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .logout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
-        }
-        
-        .user-info {
-            background: rgba(0,0,0,0.3);
-            padding: 16px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Messenger | Современный мессенджер</title>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <div class="welcome-card">
-        <div class="user-info" id="userInfo">Загрузка...</div>
-        <h1>✨ Добро пожаловать в Messenger!</h1>
-        <p>Скоро здесь будет твой чат с друзьями<br>А пока — наслаждайся стильным интерфейсом</p>
-        <button class="logout-btn" onclick="logout()">Выйти</button>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                </div>
+                <span>Messenger</span>
+            </div>
+            
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="switchPage('home')">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                    <span>Главная</span>
+                </button>
+                <button class="nav-tab" onclick="switchPage('profile')">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    <span>Профиль</span>
+                </button>
+                <button class="nav-tab" onclick="switchPage('messages')">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                    <span>Сообщения</span>
+                </button>
+                <button class="nav-tab" onclick="switchPage('settings')">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.33-.02-.64-.06-.94l2.02-1.58c.18-.14.23-.38.12-.56l-1.89-3.28c-.12-.19-.36-.26-.56-.18l-2.38.96c-.5-.38-1.06-.68-1.66-.88L14.45 3.5c-.04-.2-.2-.34-.4-.34h-3.78c-.2 0-.36.14-.4.34l-.3 2.52c-.6.2-1.16.5-1.66.88l-2.38-.96c-.2-.08-.44-.01-.56.18l-1.89 3.28c-.12.19-.07.42.12.56l2.02 1.58c-.04.3-.06.61-.06.94 0 .33.02.64.06.94l-2.02 1.58c-.18.14-.23.38-.12.56l1.89 3.28c.12.19.36.26.56.18l2.38-.96c.5.38 1.06.68 1.66.88l.3 2.52c.04.2.2.34.4.34h3.78c.2 0 .36-.14.4-.34l.3-2.52c.6-.2 1.16-.5 1.66-.88l2.38.96c.2.08.44.01.56-.18l1.89-3.28c.12-.19.07-.42-.12-.56l-2.02-1.58zM12 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+                    </svg>
+                    <span>Настройки</span>
+                </button>
+            </div>
+            
+            <div class="user-menu">
+                <div id="userName" style="color: #A1A1AA; font-size: 14px;"></div>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Главная страница -->
+        <div id="homePage" class="page active">
+            <div class="welcome-banner">
+                <h1>✨ Добро пожаловать в Messenger!</h1>
+                <p>Современный мессенджер с красивым дизайном и мгновенными сообщениями</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>Мгновенные сообщения</h3>
+                    <p>Общайтесь с друзьями в реальном времени</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Стильный дизайн</h3>
+                    <p>Современный интерфейс с тёмной темой</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Безопасность</h3>
+                    <p>Ваши данные надёжно защищены</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Адаптивность</h3>
+                    <p>Работает на всех устройствах</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Профиль -->
+        <div id="profilePage" class="page">
+            <div class="card">
+                <div class="profile-header">
+                    <div class="avatar" id="avatar">👤</div>
+                    <div class="profile-info">
+                        <h2 id="profileUsername">Загрузка...</h2>
+                        <div class="email" id="profileEmail">email@example.com</div>
+                        <div class="status">🟢 Онлайн</div>
+                    </div>
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="messagesCount">0</div>
+                        <div class="stat-label">Сообщений</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="chatsCount">0</div>
+                        <div class="stat-label">Чатов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="friendsCount">0</div>
+                        <div class="stat-label">Друзей</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Сообщения (временная заглушка) -->
+        <div id="messagesPage" class="page">
+            <div class="card" style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 64px; margin-bottom: 20px;">💬</div>
+                <h2 style="margin-bottom: 12px;">Скоро здесь будет чат</h2>
+                <p style="color: #A1A1AA;">Мы работаем над добавлением реальных сообщений</p>
+            </div>
+        </div>
+
+        <!-- Настройки (временная заглушка) -->
+        <div id="settingsPage" class="page">
+            <div class="card" style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 64px; margin-bottom: 20px;">⚙️</div>
+                <h2 style="margin-bottom: 12px;">Настройки</h2>
+                <p style="color: #A1A1AA;">Здесь можно будет настроить тему, уведомления и приватность</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        async function logout() {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            window.location.href = '/login.html';
+        let currentUser = null;
+        
+        function switchPage(pageName) {
+            // Скрываем все страницы
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Показываем выбранную
+            document.getElementById(`${pageName}Page`).classList.add('active');
+            
+            // Обновляем активную вкладку
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.closest('.nav-tab').classList.add('active');
         }
         
-        async function loadUser() {
+        async function logout() {
             try {
-                const res = await fetch('/api/auth/me');
-                if (res.ok) {
-                    const data = await res.json();
-                    document.getElementById('userInfo').innerHTML = `
-                        👋 Привет, ${data.profile?.username || data.user.email}!<br>
-                        <small style="color: #7C3AED;">${data.user.email}</small>
-                    `;
-                } else {
-                    window.location.href = '/login.html';
-                }
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login.html';
             } catch (error) {
+                console.error('Ошибка выхода:', error);
+            }
+        }
+        
+        async function loadUserProfile() {
+            try {
+                const response = await fetch('/api/auth/me');
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const data = await response.json();
+                currentUser = data;
+                
+                // Обновляем имя в шапке
+                const userNameSpan = document.getElementById('userName');
+                userNameSpan.textContent = data.profile?.username || data.user.email.split('@')[0];
+                
+                // Обновляем профиль
+                document.getElementById('profileUsername').textContent = data.profile?.username || 'Пользователь';
+                document.getElementById('profileEmail').textContent = data.user.email;
+                
+                // Аватар (первая буква имени)
+                const avatarLetter = (data.profile?.username || 'U')[0].toUpperCase();
+                document.getElementById('avatar').textContent = avatarLetter;
+                
+                // Загружаем статистику (заглушка, потом подключим реальную)
+                document.getElementById('messagesCount').textContent = '0';
+                document.getElementById('chatsCount').textContent = '0';
+                document.getElementById('friendsCount').textContent = '0';
+                
+                // Если есть avatar_url, можно подставить
+                if (data.profile?.avatar_url) {
+                    // document.getElementById('avatar').innerHTML = `<img src="${data.profile.avatar_url}" style="width:100%; border-radius:60px;">`;
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
                 window.location.href = '/login.html';
             }
         }
         
-        loadUser();
+        // Загружаем профиль при старте
+        loadUserProfile();
     </script>
 </body>
 </html>
