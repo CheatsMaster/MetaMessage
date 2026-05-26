@@ -6,7 +6,7 @@
     <title>Messenger | Социальная сеть</title>
     <link rel="stylesheet" href="/style.css">
     <style>
-        /* Дополнительные стили для чата */
+        /* Дополнительные стили для VK-профиля и чата */
         .chat-header {
             display: flex;
             align-items: center;
@@ -14,6 +14,8 @@
             margin-bottom: 20px;
             padding-bottom: 16px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+            gap: 12px;
         }
         
         .chat-user-info {
@@ -21,6 +23,7 @@
             align-items: center;
             gap: 12px;
             cursor: pointer;
+            flex: 1;
         }
         
         .chat-user-avatar {
@@ -45,6 +48,7 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
+            white-space: nowrap;
         }
         
         .back-btn:hover {
@@ -57,30 +61,161 @@
         }
         
         .chat-action-btn {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.1);
             border: none;
-            padding: 8px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             cursor: pointer;
             color: #A1A1AA;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
         }
         
         .chat-action-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(124, 58, 237, 0.3);
             color: #C084FC;
         }
         
-        /* Адаптация для мобильных */
+        .vk-profile-header {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        
+        .vk-cover {
+            height: 200px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            border-radius: 24px 24px 0 0;
+        }
+        
+        .vk-avatar {
+            position: absolute;
+            bottom: -50px;
+            left: 24px;
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            border-radius: 50%;
+            border: 4px solid #1A1A1A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 700;
+        }
+        
+        .vk-profile-info {
+            padding: 60px 24px 24px;
+            background: rgba(36, 36, 36, 0.8);
+            border-radius: 0 0 24px 24px;
+        }
+        
+        .vk-profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .vk-profile-bio {
+            color: #A1A1AA;
+            margin: 12px 0;
+            line-height: 1.6;
+        }
+        
+        .vk-profile-stats {
+            display: flex;
+            gap: 24px;
+            margin: 16px 0;
+            padding: 16px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .vk-stat {
+            text-align: center;
+        }
+        
+        .vk-stat-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #7C3AED;
+        }
+        
+        .vk-stat-label {
+            font-size: 12px;
+            color: #A1A1AA;
+        }
+        
+        .vk-action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .profile-tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px;
+            border-radius: 60px;
+            margin-bottom: 24px;
+        }
+        
+        .profile-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: #A1A1AA;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 60px;
+            transition: all 0.3s;
+        }
+        
+        .profile-tab.active {
+            background: #7C3AED;
+            color: white;
+        }
+        
+        .wall-post-form {
+            margin-bottom: 24px;
+        }
+        
         @media (max-width: 768px) {
             .chat-header {
-                flex-wrap: wrap;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            
+            .back-btn span {
+                display: none;
+            }
+            
+            .back-btn {
+                padding: 8px 12px;
+            }
+            
+            .vk-avatar {
+                width: 80px;
+                height: 80px;
+                bottom: -40px;
+                font-size: 32px;
+            }
+            
+            .vk-profile-info {
+                padding-top: 50px;
+            }
+            
+            .vk-cover {
+                height: 150px;
             }
         }
         
-        /* Анимация новых сообщений */
         @keyframes messageAppear {
             from {
                 opacity: 0;
@@ -136,7 +271,6 @@
     </div>
 
     <div class="container">
-        <!-- Лента постов -->
         <div id="feedPage" class="page active">
             <div class="card post-form">
                 <textarea id="postContent" class="post-input" rows="3" placeholder="Что у вас нового?"></textarea>
@@ -147,7 +281,6 @@
             <div id="postsFeed"></div>
         </div>
 
-        <!-- Чаты -->
         <div id="chatsPage" class="page">
             <div class="card" id="chatsListCard">
                 <h3 style="margin-bottom: 20px;">💬 Мои чаты</h3>
@@ -156,9 +289,7 @@
             <div id="chatWindow" style="display: none;">
                 <div class="card">
                     <div class="chat-header">
-                        <button class="back-btn" onclick="closeChat()">
-                            ← Назад
-                        </button>
+                        <button class="back-btn" onclick="closeChat()">← <span>Назад</span></button>
                         <div class="chat-user-info" id="chatUserInfo" onclick="viewChatUserProfile()">
                             <div class="chat-user-avatar" id="chatAvatar">👤</div>
                             <div>
@@ -167,9 +298,7 @@
                             </div>
                         </div>
                         <div class="chat-actions">
-                            <button class="chat-action-btn" onclick="showChatMenu()" title="Меню">
-                                ⋮
-                            </button>
+                            <button class="chat-action-btn" onclick="showChatMenu()" title="Меню">⋮</button>
                         </div>
                     </div>
                     <div id="chatMessages" class="chat-messages"></div>
@@ -181,7 +310,6 @@
             </div>
         </div>
 
-        <!-- Поиск пользователей -->
         <div id="searchPage" class="page">
             <div class="search-bar">
                 <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск пользователей..." onkeyup="searchUsers()">
@@ -189,24 +317,21 @@
             <div id="searchResults"></div>
         </div>
 
-        <!-- Мой профиль -->
         <div id="profilePage" class="page">
-            <div class="card">
-                <div class="profile-header">
-                    <div class="profile-avatar" id="profileAvatar">👤</div>
-                    <div class="profile-info">
-                        <h2 id="profileUsername">Загрузка...</h2>
-                        <div class="email" id="profileEmail"></div>
-                        <div class="status" id="profileStatus">🟢 Онлайн</div>
-                        <div class="profile-bio" id="profileBio"></div>
-                        <button class="btn-secondary edit-btn" onclick="openEditProfile()">✏️ Редактировать профиль</button>
-                    </div>
-                </div>
-            </div>
+            <div id="myProfileContainer"></div>
         </div>
     </div>
 
-    <!-- Модальное окно редактирования профиля -->
+    <div id="userProfileModal" class="modal">
+        <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Профиль</h3>
+                <button onclick="closeUserProfile()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div id="userProfileContent"></div>
+        </div>
+    </div>
+
     <div id="editModal" class="modal">
         <div class="modal-content">
             <h3>Редактировать профиль</h3>
@@ -221,24 +346,13 @@
         </div>
     </div>
 
-    <!-- Модальное окно просмотра профиля пользователя -->
-    <div id="userProfileModal" class="modal">
-        <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3>Профиль пользователя</h3>
-                <button onclick="closeUserProfile()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
-            </div>
-            <div id="userProfileContent"></div>
-            <div id="profileActionButton"></div>
-        </div>
-    </div>
-
     <script>
         let currentUser = null;
         let currentChat = null;
         let currentChatUser = null;
         let viewedUser = null;
         let refreshInterval = null;
+        let currentProfileTab = 'posts';
 
         function switchPage(pageName) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -247,11 +361,8 @@
             event.target.closest('.nav-tab').classList.add('active');
             
             if (pageName === 'feed') loadFeed();
-            if (pageName === 'chats') {
-                closeChat();
-                loadChats();
-            }
-            if (pageName === 'profile') loadProfile();
+            if (pageName === 'chats') { closeChat(); loadChats(); }
+            if (pageName === 'profile') renderMyProfile();
         }
 
         async function logout() {
@@ -260,21 +371,19 @@
             window.location.href = '/login.html';
         }
 
-        // ========== ПОСТЫ ==========
         async function loadFeed() {
             try {
                 const res = await fetch('/api/posts/feed');
                 if (!res.ok) throw new Error('Ошибка загрузки');
                 const posts = await res.json();
-                document.getElementById('postsFeed').innerHTML = posts.map(post => renderPost(post)).join('');
+                document.getElementById('postsFeed').innerHTML = posts.map(post => renderPost(post, false)).join('');
             } catch (error) {
                 console.error('Ошибка загрузки ленты:', error);
                 document.getElementById('postsFeed').innerHTML = '<div class="card">Ошибка загрузки постов</div>';
             }
         }
 
-        function renderPost(post) {
-            const isCurrentUser = post.user_id === currentUser?.user?.id;
+        function renderPost(post, isWall = false) {
             return `
                 <div class="post" data-post-id="${post.id}">
                     <div class="post-header">
@@ -286,12 +395,8 @@
                     </div>
                     <div class="post-content">${escapeHtml(post.content)}</div>
                     <div class="post-stats">
-                        <div class="post-stat ${post.liked_by_user ? 'active' : ''}" onclick="toggleLike('${post.id}')">
-                            ❤️ ${post.likes_count || 0}
-                        </div>
-                        <div class="post-stat" onclick="toggleComments('${post.id}')">
-                            💬 ${post.comments_count || 0}
-                        </div>
+                        <div class="post-stat ${post.liked_by_user ? 'active' : ''}" onclick="toggleLike('${post.id}')">❤️ ${post.likes_count || 0}</div>
+                        <div class="post-stat" onclick="toggleComments('${post.id}')">💬 ${post.comments_count || 0}</div>
                     </div>
                     <div class="comments-section" id="comments-${post.id}" style="display: none;">
                         <div id="comments-list-${post.id}"></div>
@@ -304,27 +409,45 @@
             `;
         }
 
-        async function createPost() {
+        async function createPost(targetUserId = null) {
             const content = document.getElementById('postContent').value;
             if (!content.trim()) return;
             
+            const body = targetUserId ? { content, user_id: targetUserId } : { content };
             const res = await fetch('/api/posts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content })
+                body: JSON.stringify(body)
             });
             
             if (res.ok) {
                 document.getElementById('postContent').value = '';
-                loadFeed();
-            } else {
-                alert('Ошибка создания поста');
-            }
+                if (targetUserId) await loadUserPosts(targetUserId);
+                else loadFeed();
+            } else alert('Ошибка создания поста');
+        }
+
+        async function createWallPost() {
+            const content = document.getElementById('wallPostContent')?.value;
+            if (!content?.trim() || !viewedUser) return;
+            
+            const res = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, user_id: viewedUser.id })
+            });
+            
+            if (res.ok) {
+                document.getElementById('wallPostContent').value = '';
+                await loadUserPosts(viewedUser.id);
+            } else alert('Ошибка отправки на стену');
         }
 
         async function toggleLike(postId) {
             await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
-            loadFeed();
+            if (viewedUser && document.getElementById('userProfileModal').classList.contains('active')) {
+                await loadUserPosts(viewedUser.id);
+            } else loadFeed();
         }
 
         async function toggleComments(postId) {
@@ -332,9 +455,7 @@
             if (commentsDiv.style.display === 'none') {
                 commentsDiv.style.display = 'block';
                 await loadComments(postId);
-            } else {
-                commentsDiv.style.display = 'none';
-            }
+            } else commentsDiv.style.display = 'none';
         }
 
         async function loadComments(postId) {
@@ -344,9 +465,8 @@
                 const comments = await res.json();
                 const commentsList = document.getElementById(`comments-list-${postId}`);
                 
-                if (comments.length === 0) {
-                    commentsList.innerHTML = '<div style="color: #A1A1AA; text-align: center; padding: 20px;">Нет комментариев. Будьте первым!</div>';
-                } else {
+                if (comments.length === 0) commentsList.innerHTML = '<div style="color: #A1A1AA; text-align: center; padding: 20px;">Нет комментариев. Будьте первым!</div>';
+                else {
                     commentsList.innerHTML = comments.map(c => `
                         <div class="comment">
                             <div class="comment-avatar" onclick="viewUserProfile('${c.user_id}')" style="cursor: pointer;">${(c.profiles?.username?.[0] || 'U').toUpperCase()}</div>
@@ -378,30 +498,22 @@
             if (res.ok) {
                 input.value = '';
                 await loadComments(postId);
-                loadFeed();
-            } else {
-                alert('Ошибка отправки комментария');
-            }
+                if (viewedUser && document.getElementById('userProfileModal').classList.contains('active')) await loadUserPosts(viewedUser.id);
+                else loadFeed();
+            } else alert('Ошибка отправки комментария');
         }
 
-        // ========== ПОИСК ПОЛЬЗОВАТЕЛЕЙ ==========
         async function searchUsers() {
             const query = document.getElementById('searchInput').value;
-            if (query.length < 2) {
-                document.getElementById('searchResults').innerHTML = '';
-                return;
-            }
+            if (query.length < 2) { document.getElementById('searchResults').innerHTML = ''; return; }
             
             try {
-                console.log('Поиск:', query);
                 const res = await fetch(`/api/friends/search?q=${encodeURIComponent(query)}`);
                 if (!res.ok) throw new Error('Ошибка поиска');
                 const users = await res.json();
-                console.log('Найдено пользователей:', users.length);
                 
-                if (users.length === 0) {
-                    document.getElementById('searchResults').innerHTML = '<div class="card" style="text-align: center;">Пользователи не найдены</div>';
-                } else {
+                if (users.length === 0) document.getElementById('searchResults').innerHTML = '<div class="card" style="text-align: center;">Пользователи не найдены</div>';
+                else {
                     document.getElementById('searchResults').innerHTML = users.map(user => `
                         <div class="user-card">
                             <div class="user-info" onclick="viewUserProfile('${user.id}')" style="cursor: pointer; flex: 1;">
@@ -422,35 +534,15 @@
             }
         }
 
-        // ========== ПРОСМОТР ПРОФИЛЯ ПОЛЬЗОВАТЕЛЯ ==========
         async function viewUserProfile(userId) {
             try {
                 const res = await fetch(`/api/users/${userId}`);
                 if (!res.ok) throw new Error('Ошибка загрузки профиля');
                 const user = await res.json();
                 viewedUser = user;
-                
                 const isOwnProfile = userId === currentUser?.user?.id;
                 
-                const content = document.getElementById('userProfileContent');
-                content.innerHTML = `
-                    <div style="text-align: center;">
-                        <div class="profile-avatar" style="width: 100px; height: 100px; margin: 0 auto 20px;">${(user.username?.[0] || 'U').toUpperCase()}</div>
-                        <h2>${escapeHtml(user.username || 'Пользователь')}</h2>
-                        <div style="color: #A1A1AA; margin: 8px 0;">${escapeHtml(user.full_name || '')}</div>
-                        <div style="color: #A1A1AA; margin: 8px 0;">${escapeHtml(user.bio || 'Расскажите о себе')}</div>
-                        ${user.website ? `<div style="color: #7C3AED; margin: 8px 0;">🌐 ${escapeHtml(user.website)}</div>` : ''}
-                        <div class="status" style="margin-top: 16px;">🟢 ${user.status || 'online'}</div>
-                    </div>
-                `;
-                
-                const buttonDiv = document.getElementById('profileActionButton');
-                if (isOwnProfile) {
-                    buttonDiv.innerHTML = '<button class="btn-secondary" onclick="closeUserProfile()" style="width: 100%; margin-top: 20px;">Закрыть</button>';
-                } else {
-                    buttonDiv.innerHTML = '<button class="btn-primary" onclick="startChatFromProfile()" style="width: 100%; margin-top: 20px;">💬 Написать сообщение</button>';
-                }
-                
+                await renderUserProfileModal(user, isOwnProfile);
                 document.getElementById('userProfileModal').classList.add('active');
             } catch (error) {
                 console.error('Ошибка загрузки профиля пользователя:', error);
@@ -458,110 +550,185 @@
             }
         }
 
+        async function renderUserProfileModal(user, isOwnProfile) {
+            await loadUserPosts(user.id);
+            
+            const content = document.getElementById('userProfileContent');
+            content.innerHTML = `
+                <div class="vk-profile-header">
+                    <div class="vk-cover"></div>
+                    <div class="vk-avatar">${(user.username?.[0] || 'U').toUpperCase()}</div>
+                    <div class="vk-profile-info">
+                        <div class="vk-profile-name">${escapeHtml(user.username || 'Пользователь')}</div>
+                        <div class="vk-profile-bio">${escapeHtml(user.bio || 'Расскажите о себе')}</div>
+                        ${user.website ? `<div style="color: #7C3AED; margin: 8px 0;">🌐 ${escapeHtml(user.website)}</div>` : ''}
+                        <div class="vk-profile-stats">
+                            <div class="vk-stat"><div class="vk-stat-number" id="userPostsCount">0</div><div class="vk-stat-label">записей</div></div>
+                            <div class="vk-stat"><div class="vk-stat-number" id="userSubscribersCount">0</div><div class="vk-stat-label">подписчиков</div></div>
+                            <div class="vk-stat"><div class="vk-stat-number" id="userSubscriptionsCount">0</div><div class="vk-stat-label">подписок</div></div>
+                        </div>
+                        <div class="vk-action-buttons">
+                            ${!isOwnProfile ? `
+                                <button class="btn-primary" onclick="startChat('${user.id}'); closeUserProfile();">💬 Сообщение</button>
+                                <button class="btn-secondary" onclick="subscribeUser('${user.id}')">👥 Подписаться</button>
+                            ` : `<button class="btn-secondary" onclick="openEditProfile()">✏️ Редактировать</button>`}
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-tabs" style="margin-top: 24px;">
+                    <button class="profile-tab active" onclick="switchProfileTab('posts', '${user.id}')">📝 Записи</button>
+                    <button class="profile-tab" onclick="switchProfileTab('photos', '${user.id}')">📸 Фото</button>
+                </div>
+                <div id="userPostsContainer"></div>
+            `;
+            
+            document.getElementById('userPostsCount').textContent = window.currentUserPostsCount || 0;
+            
+            if (!isOwnProfile) {
+                const postsContainer = document.getElementById('userPostsContainer');
+                const wallForm = document.createElement('div');
+                wallForm.className = 'card wall-post-form';
+                wallForm.innerHTML = `
+                    <textarea id="wallPostContent" class="post-input" rows="2" placeholder="Написать на стену ${escapeHtml(user.username)}..."></textarea>
+                    <div class="post-actions"><button class="btn-primary" onclick="createWallPost()">📝 Отправить</button></div>
+                `;
+                postsContainer.insertBefore(wallForm, postsContainer.firstChild);
+            }
+        }
+        
+        async function loadUserPosts(userId) {
+            try {
+                const res = await fetch(`/api/posts/user/${userId}`);
+                if (!res.ok) throw new Error('Ошибка загрузки постов');
+                const posts = await res.json();
+                window.currentUserPostsCount = posts.length;
+                
+                const postsContainer = document.getElementById('userPostsContainer');
+                if (postsContainer) {
+                    const existingForm = postsContainer.querySelector('.wall-post-form');
+                    if (posts.length === 0) {
+                        postsContainer.innerHTML = (existingForm ? existingForm.outerHTML : '') + '<div class="card" style="text-align: center;">Нет записей на стене</div>';
+                    } else {
+                        postsContainer.innerHTML = (existingForm ? existingForm.outerHTML : '') + posts.map(post => renderPost(post, true)).join('');
+                    }
+                }
+            } catch (error) { console.error('Ошибка загрузки постов пользователя:', error); }
+        }
+        
+        async function switchProfileTab(tab, userId) {
+            currentProfileTab = tab;
+            document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'posts') await loadUserPosts(userId);
+            else if (tab === 'photos') document.getElementById('userPostsContainer').innerHTML = '<div class="card" style="text-align: center;">📸 Фотоальбомы скоро появятся...</div>';
+        }
+
         function closeUserProfile() {
             document.getElementById('userProfileModal').classList.remove('active');
             viewedUser = null;
+            currentProfileTab = 'posts';
         }
 
-        async function startChatFromProfile() {
-            if (viewedUser && viewedUser.id !== currentUser?.user?.id) {
-                await startChat(viewedUser.id);
-                closeUserProfile();
-            }
+        async function subscribeUser(userId) { alert('🚧 Функция подписки в разработке'); }
+
+        async function renderMyProfile() {
+            if (!currentUser) await loadProfile();
+            
+            const container = document.getElementById('myProfileContainer');
+            container.innerHTML = `
+                <div class="vk-profile-header">
+                    <div class="vk-cover"></div>
+                    <div class="vk-avatar">${(currentUser?.profile?.username?.[0] || 'U').toUpperCase()}</div>
+                    <div class="vk-profile-info">
+                        <div class="vk-profile-name">${escapeHtml(currentUser?.profile?.username || 'Пользователь')}</div>
+                        <div class="vk-profile-bio">${escapeHtml(currentUser?.profile?.bio || 'Расскажите о себе')}</div>
+                        ${currentUser?.profile?.website ? `<div style="color: #7C3AED; margin: 8px 0;">🌐 ${escapeHtml(currentUser?.profile?.website)}</div>` : ''}
+                        <div class="vk-profile-stats">
+                            <div class="vk-stat"><div class="vk-stat-number" id="myPostsCount">0</div><div class="vk-stat-label">записей</div></div>
+                            <div class="vk-stat"><div class="vk-stat-number" id="mySubscribersCount">0</div><div class="vk-stat-label">подписчиков</div></div>
+                            <div class="vk-stat"><div class="vk-stat-number" id="mySubscriptionsCount">0</div><div class="vk-stat-label">подписок</div></div>
+                        </div>
+                        <div class="vk-action-buttons"><button class="btn-secondary" onclick="openEditProfile()">✏️ Редактировать профиль</button></div>
+                    </div>
+                </div>
+                <div class="profile-tabs" style="margin-top: 24px;">
+                    <button class="profile-tab active" onclick="switchMyProfileTab('posts')">📝 Мои записи</button>
+                    <button class="profile-tab" onclick="switchMyProfileTab('photos')">📸 Фото</button>
+                </div>
+                <div id="myPostsContainer"></div>
+            `;
+            await loadMyPosts();
+        }
+        
+        async function loadMyPosts() {
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/posts/user/${currentUser.user.id}`);
+                if (!res.ok) throw new Error('Ошибка загрузки постов');
+                const posts = await res.json();
+                const container = document.getElementById('myPostsContainer');
+                if (posts.length === 0) container.innerHTML = '<div class="card" style="text-align: center;">У вас пока нет записей</div>';
+                else container.innerHTML = posts.map(post => renderPost(post, true)).join('');
+                document.getElementById('myPostsCount').textContent = posts.length;
+            } catch (error) { console.error('Ошибка загрузки моих постов:', error); }
+        }
+        
+        async function switchMyProfileTab(tab) {
+            document.querySelectorAll('#myProfileContainer .profile-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            if (tab === 'posts') await loadMyPosts();
+            else document.getElementById('myPostsContainer').innerHTML = '<div class="card" style="text-align: center;">📸 Фотоальбомы скоро появятся...</div>';
         }
 
-        // ========== ЧАТЫ ==========
         async function loadChats() {
             try {
                 const res = await fetch('/api/chats');
                 if (!res.ok) throw new Error('Ошибка загрузки чатов');
                 const chats = await res.json();
-                console.log('Загружено чатов:', chats.length);
-                
-                if (chats.length === 0) {
-                    document.getElementById('chatsList').innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет чатов. Начните диалог через поиск!</div>';
-                } else {
+                if (chats.length === 0) document.getElementById('chatsList').innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет чатов. Начните диалог через поиск!</div>';
+                else {
                     document.getElementById('chatsList').innerHTML = chats.map(chat => `
                         <div class="chat-item" onclick="openChat('${chat.id}')">
-                            <div>
-                                <div style="font-weight: 600;">${escapeHtml(chat.name || 'Личный чат')}</div>
-                                <div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(chat.last_message?.content || 'Нет сообщений')}</div>
-                            </div>
+                            <div><div style="font-weight: 600;">${escapeHtml(chat.name || 'Личный чат')}</div><div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(chat.last_message?.content || 'Нет сообщений')}</div></div>
                             <div style="font-size: 12px; color: #A1A1AA;">${chat.last_message ? new Date(chat.last_message.created_at).toLocaleTimeString() : ''}</div>
                         </div>
                     `).join('');
                 }
-            } catch (error) {
-                console.error('Ошибка загрузки чатов:', error);
-                document.getElementById('chatsList').innerHTML = '<div class="card" style="text-align: center;">Ошибка загрузки чатов</div>';
-            }
+            } catch (error) { console.error('Ошибка загрузки чатов:', error); }
         }
 
         async function startChat(userId) {
             try {
-                console.log('Начинаем чат с:', userId);
                 const res = await fetch(`/api/chats/private/${userId}`, { method: 'POST' });
                 if (!res.ok) throw new Error('Ошибка создания чата');
                 const chat = await res.json();
                 await openChat(chat.id);
                 switchPage('chats');
-            } catch (error) {
-                console.error('Ошибка создания чата:', error);
-                alert('Не удалось начать чат');
-            }
+            } catch (error) { console.error('Ошибка создания чата:', error); alert('Не удалось начать чат'); }
         }
 
         async function openChat(chatId) {
             currentChat = chatId;
-            
-            // Скрываем список чатов, показываем окно чата
             document.getElementById('chatsListCard').style.display = 'none';
             document.getElementById('chatWindow').style.display = 'block';
-            
-            // Загружаем информацию о собеседнике
             await loadChatUserInfo(chatId);
             await loadMessages();
-            
-            // Запускаем автообновление каждые 3 секунды
             if (refreshInterval) clearInterval(refreshInterval);
-            refreshInterval = setInterval(() => {
-                if (currentChat) loadMessages();
-            }, 3000);
+            refreshInterval = setInterval(() => { if (currentChat) loadMessages(); }, 3000);
         }
         
         async function loadChatUserInfo(chatId) {
             try {
-                // Получаем участников чата
-                const res = await fetch(`/api/chats/${chatId}/participants`);
-                // Если нет эндпоинта, получаем через сообщения
-                const messagesRes = await fetch(`/api/chats/${chatId}/messages`);
-                const messages = await messagesRes.json();
-                
-                // Находим отправителя, который не текущий пользователь
+                const res = await fetch(`/api/chats/${chatId}/messages`);
+                const messages = await res.json();
                 const otherSender = messages.find(m => m.sender_id !== currentUser?.user?.id);
                 if (otherSender) {
                     currentChatUser = otherSender.profiles;
-                } else {
-                    // Если сообщений нет, получаем через список участников
-                    const participantsRes = await fetch(`/api/chats/${chatId}/participants`);
-                    if (participantsRes.ok) {
-                        const participants = await participantsRes.json();
-                        const otherUser = participants.find(p => p.user_id !== currentUser?.user?.id);
-                        if (otherUser) {
-                            const userRes = await fetch(`/api/users/${otherUser.user_id}`);
-                            currentChatUser = await userRes.json();
-                        }
-                    }
+                    document.getElementById('chatUserName').textContent = currentChatUser?.username || 'Пользователь';
+                    document.getElementById('chatAvatar').textContent = (currentChatUser?.username?.[0] || 'U').toUpperCase();
                 }
-                
-                if (currentChatUser) {
-                    document.getElementById('chatUserName').textContent = currentChatUser.username || 'Пользователь';
-                    document.getElementById('chatAvatar').textContent = (currentChatUser.username?.[0] || 'U').toUpperCase();
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки информации о чате:', error);
-                document.getElementById('chatUserName').textContent = 'Чат';
-            }
+            } catch (error) { console.error('Ошибка загрузки информации о чате:', error); }
         }
         
         function closeChat() {
@@ -569,22 +736,12 @@
             currentChatUser = null;
             document.getElementById('chatsListCard').style.display = 'block';
             document.getElementById('chatWindow').style.display = 'none';
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-                refreshInterval = null;
-            }
+            if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
             loadChats();
         }
         
-        function viewChatUserProfile() {
-            if (currentChatUser) {
-                viewUserProfile(currentChatUser.id);
-            }
-        }
-        
-        function showChatMenu() {
-            alert('🚧 В разработке: очистка чата, уведомления, блокировка');
-        }
+        function viewChatUserProfile() { if (currentChatUser) { closeChat(); viewUserProfile(currentChatUser.id); } }
+        function showChatMenu() { alert('🚧 В разработке: очистка чата, уведомления, блокировка'); }
 
         async function loadMessages() {
             if (!currentChat) return;
@@ -593,12 +750,11 @@
                 if (!res.ok) throw new Error('Ошибка загрузки сообщений');
                 const messages = await res.json();
                 const messagesDiv = document.getElementById('chatMessages');
-                const oldMessageCount = messagesDiv.children.length;
+                const wasAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 100;
                 
-                if (messages.length === 0) {
-                    messagesDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет сообщений. Напишите что-нибудь!</div>';
-                } else {
-                    const newMessagesHtml = messages.map(msg => `
+                if (messages.length === 0) messagesDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет сообщений. Напишите что-нибудь!</div>';
+                else {
+                    messagesDiv.innerHTML = messages.map(msg => `
                         <div class="message ${msg.sender_id === currentUser?.user?.id ? 'sent' : ''}">
                             <div class="message-bubble">
                                 <div style="font-size: 11px; margin-bottom: 4px; color: #C084FC;">${escapeHtml(msg.profiles?.username)}</div>
@@ -607,18 +763,9 @@
                             </div>
                         </div>
                     `).join('');
-                    
-                    // Прокручиваем вниз только если это новое сообщение
-                    const wasAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 100;
-                    messagesDiv.innerHTML = newMessagesHtml;
-                    if (wasAtBottom || oldMessageCount === 0) {
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    }
+                    if (wasAtBottom) messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 }
-            } catch (error) {
-                console.error('Ошибка загрузки сообщений:', error);
-                document.getElementById('chatMessages').innerHTML = '<div style="color: red;">Ошибка загрузки сообщений</div>';
-            }
+            } catch (error) { console.error('Ошибка загрузки сообщений:', error); }
         }
 
         async function sendMessage() {
@@ -632,52 +779,31 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content })
                 });
-                
-                if (res.ok) {
-                    input.value = '';
-                    await loadMessages();
-                    // Обновляем список чатов чтобы показать последнее сообщение
-                    loadChats();
-                } else {
-                    const error = await res.json();
-                    alert('Ошибка отправки сообщения: ' + (error.error || 'Неизвестная ошибка'));
-                }
-            } catch (error) {
-                console.error('Ошибка отправки сообщения:', error);
-                alert('Ошибка отправки сообщения');
-            }
+                if (res.ok) { input.value = ''; await loadMessages(); loadChats(); }
+                else alert('Ошибка отправки сообщения');
+            } catch (error) { console.error('Ошибка отправки сообщения:', error); }
         }
 
-        // ========== ПРОФИЛЬ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ ==========
         async function loadProfile() {
             try {
                 const res = await fetch('/api/auth/me');
                 if (!res.ok) throw new Error('Ошибка загрузки профиля');
                 const data = await res.json();
                 currentUser = data;
-                
-                document.getElementById('profileUsername').textContent = data.profile?.username || 'Пользователь';
-                document.getElementById('profileEmail').textContent = data.user.email;
-                document.getElementById('profileBio').textContent = data.profile?.bio || 'Расскажите о себе';
-                document.getElementById('profileAvatar').textContent = (data.profile?.username?.[0] || 'U').toUpperCase();
                 document.getElementById('userName').textContent = data.profile?.username || data.user.email.split('@')[0];
-            } catch (error) {
-                console.error('Ошибка загрузки профиля:', error);
-                window.location.href = '/login.html';
-            }
+            } catch (error) { console.error('Ошибка загрузки профиля:', error); window.location.href = '/login.html'; }
         }
 
         function openEditProfile() {
             document.getElementById('editModal').classList.add('active');
-            document.getElementById('editUsername').value = currentUser.profile?.username || '';
-            document.getElementById('editFullName').value = currentUser.profile?.full_name || '';
-            document.getElementById('editBio').value = currentUser.profile?.bio || '';
-            document.getElementById('editWebsite').value = currentUser.profile?.website || '';
+            document.getElementById('editUsername').value = currentUser?.profile?.username || '';
+            document.getElementById('editFullName').value = currentUser?.profile?.full_name || '';
+            document.getElementById('editBio').value = currentUser?.profile?.bio || '';
+            document.getElementById('editWebsite').value = currentUser?.profile?.website || '';
+            closeUserProfile();
         }
 
-        function closeEditProfile() {
-            document.getElementById('editModal').classList.remove('active');
-        }
+        function closeEditProfile() { document.getElementById('editModal').classList.remove('active'); }
 
         async function saveProfile() {
             const data = {
@@ -693,34 +819,15 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
-                if (res.ok) {
-                    closeEditProfile();
-                    await loadProfile();
-                    alert('Профиль успешно обновлен!');
-                } else {
-                    alert('Ошибка сохранения профиля');
-                }
-            } catch (error) {
-                console.error('Ошибка сохранения:', error);
-                alert('Ошибка сохранения профиля');
-            }
+                if (res.ok) { closeEditProfile(); await loadProfile(); await renderMyProfile(); alert('Профиль успешно обновлен!'); }
+                else alert('Ошибка сохранения профиля');
+            } catch (error) { console.error('Ошибка сохранения:', error); alert('Ошибка сохранения профиля'); }
         }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
-        // Добавляем эндпоинт для получения участников чата в chats.js
-        async function init() {
-            await loadProfile();
-            await loadFeed();
-        }
+        async function init() { await loadProfile(); await loadFeed(); }
         
-        // Инициализация
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>

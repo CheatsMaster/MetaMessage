@@ -168,4 +168,52 @@ router.get('/:postId/comments', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/user/:userId', authenticateToken, async (req, res) => {
+  const { userId } = req.params;
+  const currentUserId = req.user.id;
+  
+  try {
+    const { data: posts, error } = await supabaseAdmin
+      .from('posts')
+      .select(`
+        *,
+        profiles:user_id (id, username, avatar_url, full_name)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const postsWithStats = await Promise.all(posts.map(async (post) => {
+      const { count: likesCount } = await supabaseAdmin
+        .from('post_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+      
+      const { data: userLike } = await supabaseAdmin
+        .from('post_likes')
+        .select('*')
+        .eq('post_id', post.id)
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+      
+      const { count: commentsCount } = await supabaseAdmin
+        .from('post_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+      
+      return {
+        ...post,
+        likes_count: likesCount || 0,
+        comments_count: commentsCount || 0,
+        liked_by_user: !!userLike
+      };
+    }));
+    
+    res.json(postsWithStats);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
