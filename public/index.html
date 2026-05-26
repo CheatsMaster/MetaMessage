@@ -355,10 +355,11 @@
             
             const content = document.getElementById('userProfileContent');
             content.innerHTML = `
-                <div style="position: relative; margin-bottom: 24px; min-height: 220px;">
-                    <div style="height: 200px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 24px 24px 0 0;"></div>
-                    <div style="position: absolute; bottom: -50px; left: 24px; width: 120px; height: 120px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 50%; border: 4px solid #1A1A1A; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; z-index: 10;">${(user.username?.[0] || 'U').toUpperCase()}</div>
-                    <div style="padding: 60px 24px 24px; background: rgba(36, 36, 36, 0.8); border-radius: 0 0 24px 24px; position: relative; z-index: 1;">
+                <div>
+                    <div style="background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 24px 24px 0 0; height: 200px; display: flex; align-items: flex-end; justify-content: flex-start; padding-left: 24px; padding-bottom: 20px;">
+                        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 50%; border: 4px solid #1A1A1A; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; background-color: #7C3AED;">${(user.username?.[0] || 'U').toUpperCase()}</div>
+                    </div>
+                    <div style="padding: 20px 24px 24px; background: rgba(36, 36, 36, 0.8); border-radius: 0 0 24px 24px;">
                         <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">${escapeHtml(user.username || 'Пользователь')}</div>
                         <div style="color: #A1A1AA; margin: 12px 0; line-height: 1.6;">${escapeHtml(user.bio || 'Расскажите о себе')}</div>
                         ${user.website ? `<div style="color: #7C3AED; margin: 8px 0;">🌐 ${escapeHtml(user.website)}</div>` : ''}
@@ -458,10 +459,11 @@
             
             const container = document.getElementById('myProfileContainer');
             container.innerHTML = `
-                <div style="position: relative; margin-bottom: 24px;">
-                    <div style="height: 200px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 24px 24px 0 0;"></div>
-                    <div style="position: absolute; bottom: -50px; left: 24px; width: 120px; height: 120px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 50%; border: 4px solid #1A1A1A; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700;">${(currentUser?.profile?.username?.[0] || 'U').toUpperCase()}</div>
-                    <div style="padding: 60px 24px 24px; background: rgba(36, 36, 36, 0.8); border-radius: 0 0 24px 24px;">
+                <div>
+                    <div style="background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 24px 24px 0 0; height: 200px; display: flex; align-items: flex-end; justify-content: flex-start; padding-left: 24px; padding-bottom: 20px;">
+                        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 50%; border: 4px solid #1A1A1A; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700;">${(currentUser?.profile?.username?.[0] || 'U').toUpperCase()}</div>
+                    </div>
+                    <div style="padding: 20px 24px 24px; background: rgba(36, 36, 36, 0.8); border-radius: 0 0 24px 24px;">
                         <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">${escapeHtml(currentUser?.profile?.username || 'Пользователь')}</div>
                         <div style="color: #A1A1AA; margin: 12px 0; line-height: 1.6;">${escapeHtml(currentUser?.profile?.bio || 'Расскажите о себе')}</div>
                         ${currentUser?.profile?.website ? `<div style="color: #7C3AED; margin: 8px 0;">🌐 ${escapeHtml(currentUser?.profile?.website)}</div>` : ''}
