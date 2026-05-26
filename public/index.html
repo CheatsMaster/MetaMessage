@@ -14,7 +14,6 @@
             margin-bottom: 20px;
             padding-bottom: 16px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            flex-wrap: wrap;
             gap: 12px;
         }
         
@@ -80,6 +79,7 @@
             color: #C084FC;
         }
         
+        /* VK стиль профиля */
         .vk-profile-header {
             position: relative;
             margin-bottom: 24px;
@@ -161,8 +161,7 @@
             background: rgba(0, 0, 0, 0.3);
             padding: 4px;
             border-radius: 60px;
-            margin-bottom: 24px;
-            margin-top: 24px;
+            margin: 24px 0;
         }
         
         .profile-tab {
@@ -187,15 +186,9 @@
             margin-bottom: 24px;
         }
         
-        /* Стили для контейнера постов без лишних аватарок */
-        #userPostsContainer, #myPostsContainer {
-            margin-top: 0;
-        }
-        
         @media (max-width: 768px) {
             .chat-header {
-                flex-direction: row;
-                justify-content: space-between;
+                gap: 8px;
             }
             
             .back-btn span {
@@ -220,21 +213,6 @@
             .vk-cover {
                 height: 150px;
             }
-        }
-        
-        @keyframes messageAppear {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .message.new {
-            animation: messageAppear 0.3s ease;
         }
     </style>
 </head>
@@ -296,7 +274,7 @@
                 <div class="card">
                     <div class="chat-header">
                         <button class="back-btn" onclick="closeChat()">← <span>Назад</span></button>
-                        <div class="chat-user-info" id="chatUserInfo" onclick="viewChatUserProfile()">
+                        <div class="chat-user-info" id="chatUserInfo">
                             <div class="chat-user-avatar" id="chatAvatar">👤</div>
                             <div>
                                 <div style="font-weight: 600;" id="chatUserName">Загрузка...</div>
@@ -358,7 +336,6 @@
         let currentChatUser = null;
         let viewedUser = null;
         let refreshInterval = null;
-        let currentProfileTab = 'posts';
 
         function switchPage(pageName) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -619,12 +596,16 @@
             
             document.getElementById('userPostsCount').textContent = window.currentUserPostsCount || 0;
             
-            // Привязываем обработчик к кнопке "Сообщение"
             const msgBtn = document.getElementById('messageFromProfileBtn');
             if (msgBtn) {
-                msgBtn.onclick = async () => {
+                msgBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const userIdToChat = user.id;
                     closeUserProfile();
-                    await startChat(user.id);
+                    setTimeout(async () => {
+                        await startChat(userIdToChat);
+                    }, 100);
                 };
             }
             
@@ -662,7 +643,6 @@
         }
         
         async function switchProfileTab(tab, userId) {
-            currentProfileTab = tab;
             document.querySelectorAll('#userProfileModal .profile-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
             
@@ -676,7 +656,6 @@
         function closeUserProfile() {
             document.getElementById('userProfileModal').classList.remove('active');
             viewedUser = null;
-            currentProfileTab = 'posts';
         }
 
         async function subscribeUser(userId) { 
@@ -764,6 +743,10 @@
 
         async function startChat(userId) {
             try {
+                if (!userId || userId === currentUser?.user?.id) {
+                    alert('Нельзя начать чат с самим собой');
+                    return;
+                }
                 const res = await fetch(`/api/chats/private/${userId}`, { method: 'POST' });
                 if (!res.ok) {
                     const error = await res.json();
@@ -782,6 +765,17 @@
             currentChat = chatId;
             document.getElementById('chatsListCard').style.display = 'none';
             document.getElementById('chatWindow').style.display = 'block';
+            
+            // Назначаем обработчик для клика по информации о чате
+            const chatUserInfo = document.getElementById('chatUserInfo');
+            chatUserInfo.onclick = () => {
+                if (currentChatUser) {
+                    const userId = currentChatUser.id;
+                    closeChat();
+                    viewUserProfile(userId);
+                }
+            };
+            
             await loadChatUserInfo(chatId);
             await loadMessages();
             if (refreshInterval) clearInterval(refreshInterval);
@@ -798,7 +792,6 @@
                     document.getElementById('chatUserName').textContent = currentChatUser?.username || 'Пользователь';
                     document.getElementById('chatAvatar').textContent = (currentChatUser?.username?.[0] || 'U').toUpperCase();
                 } else {
-                    // Если сообщений нет, пытаемся получить участников через отдельный эндпоинт
                     const participantsRes = await fetch(`/api/chats/${chatId}/participants`);
                     if (participantsRes.ok) {
                         const participants = await participantsRes.json();
@@ -826,13 +819,6 @@
                 refreshInterval = null; 
             }
             loadChats();
-        }
-        
-        function viewChatUserProfile() { 
-            if (currentChatUser) { 
-                closeChat(); 
-                viewUserProfile(currentChatUser.id); 
-            } 
         }
         
         function showChatMenu() { 
