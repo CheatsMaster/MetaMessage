@@ -36,6 +36,16 @@ window.switchPage = async (pageName) => {
     const activePage = document.getElementById(`${pageName}Page`);
     if (activePage) activePage.classList.add('active');
     
+    // Меняем активную вкладку в навигации
+    const navTabs = document.querySelectorAll('.nav-tab');
+    navTabs.forEach(tab => {
+        tab.classList.remove('active');
+        const tabPage = tab.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
+        if (tabPage === pageName) {
+            tab.classList.add('active');
+        }
+    });
+    
     setState({ activePage: pageName });
     
     try {
@@ -49,9 +59,8 @@ window.switchPage = async (pageName) => {
             document.getElementById('searchResults').innerHTML = '';
         } else if (pageName === 'profile') {
             await renderMyProfile(document.getElementById('myProfileContainer'));
-        } else if (pageName === 'settings') {
-            await renderSettings(document.getElementById('settingsContainer'));
         }
+        // Убираем settings из switchPage - настройки теперь только через профиль
     } catch (error) {
         console.error('Ошибка загрузки страницы:', error);
     }

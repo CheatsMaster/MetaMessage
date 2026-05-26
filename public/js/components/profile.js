@@ -21,7 +21,7 @@ export async function renderMyProfile(container) {
                 <button class="btn-secondary" onclick="window.openSettings()">⚙️ Настройки</button>
             </div>
             <div style="color: #A1A1AA; margin: 12px 0; line-height: 1.6;">${escapeHtml(state.currentUser?.profile?.bio || 'Расскажите о себе')}</div>
-            ${state.currentUser?.profile?.birth_date ? `<div style="color: #7C3AED; margin: 8px 0;">🎂 ${escapeHtml(state.currentUser?.profile?.birth_date)}</div>` : ''}
+            <div style="color: #7C3AED; margin: 8px 0;">🎂 ${escapeHtml(state.currentUser?.profile?.birth_date || 'Дата не указана')}</div>
             <div style="display: flex; gap: 24px; margin: 16px 0; padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                 <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="myPostsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">записей</div></div>
                 <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="myFriendsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">друзей</div></div>
@@ -55,10 +55,17 @@ async function loadMyPosts() {
 }
 
 function renderProfilePost(post) {
+    const isOwnPost = post.user_id === state.currentUser?.user?.id;
     return `
         <div class="post">
+            <div class="post-header">
+                <div class="post-avatar" onclick="window.viewUserProfile('${post.user_id}')" style="cursor: pointer;">${(post.profiles?.username?.[0] || 'U').toUpperCase()}</div>
+                <div>
+                    <div class="post-author" onclick="window.viewUserProfile('${post.user_id}')" style="cursor: pointer;">${escapeHtml(post.profiles?.username || 'Пользователь')}</div>
+                    <div class="post-time">${formatDate(post.created_at)}</div>
+                </div>
+            </div>
             <div class="post-content">${escapeHtml(post.content)}</div>
-            <div class="post-time">${formatDate(post.created_at)}</div>
             <div class="post-stats">
                 <div class="post-stat">❤️ ${post.likes_count || 0}</div>
                 <div class="post-stat">💬 ${post.comments_count || 0}</div>
@@ -107,7 +114,7 @@ export async function viewUserProfile(userId) {
                 <div style="padding: 20px 24px 24px; background: rgba(36, 36, 36, 0.8); border-radius: 0 0 24px 24px;">
                     <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">${escapeHtml(user.username || 'Пользователь')}</div>
                     <div style="color: #A1A1AA; margin: 12px 0; line-height: 1.6;">${escapeHtml(user.bio || 'Расскажите о себе')}</div>
-                    ${user.birth_date ? `<div style="color: #7C3AED; margin: 8px 0;">🎂 ${escapeHtml(user.birth_date)}</div>` : ''}
+                    ${user.birth_date ? `<div style="color: #7C3AED; margin: 8px 0;">🎂 ${escapeHtml(user.birth_date)}</div>` : '<div style="color: #A1A1AA; margin: 8px 0;">🎂 Дата не указана</div>'} 
                     <div style="display: flex; gap: 24px; margin: 16px 0; padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="userPostsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">записей</div></div>
                         <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="userFriendsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">друзей</div></div>
