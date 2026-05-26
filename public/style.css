@@ -649,6 +649,26 @@ body {
     background: linear-gradient(135deg, #7C3AED, #A78BFA);
 }
 
+/* Принудительное исправление для профиля */
+#userProfileModal .modal-content,
+#myProfileContainer {
+    overflow: visible !important;
+    position: relative !important;
+}
+
+#userProfileModal .modal-content > div:first-child,
+#myProfileContainer > div:first-child {
+    position: relative !important;
+    display: block !important;
+    min-height: 250px !important;
+}
+
+.vk-profile-header-fix {
+    position: relative !important;
+    margin-bottom: 24px !important;
+    min-height: 200px !important;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .header-content {
