@@ -216,4 +216,67 @@ router.get('/user/:userId', authenticateToken, async (req, res) => {
   }
 });
 
+// Лайкнуть комментарий
+router.post('/comments/:commentId/like', authenticateToken, async (req, res) => {
+  const { commentId } = req.params;
+  const userId = req.user.id;
+  
+  try {
+    const { data: existingLike } = await supabaseAdmin
+      .from('comment_likes')
+      .select('*')
+      .eq('comment_id', commentId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (existingLike) {
+      await supabaseAdmin
+        .from('comment_likes')
+        .delete()
+        .eq('comment_id', commentId)
+        .eq('user_id', userId);
+      
+      await supabaseAdmin
+        .from('post_comments')
+        .update({ likes_count: supabaseAdmin.sql`likes_count - 1` })
+        .eq('id', commentId);
+      
+      res.json({ liked: false });
+    } else {
+      await supabaseAdmin
+        .from('comment_likes')
+        .insert([{ comment_id: commentId, user_id: userId }]);
+      
+      await supabaseAdmin
+        .from('post_comments')
+        .update({ likes_count: supabaseAdmin.sql`likes_count + 1` })
+        .eq('id', commentId);
+      
+      res.json({ liked: true });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Получить список лайкнувших пост
+router.get('/:postId/likes', authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('post_likes')
+      .select(`
+        user_id,
+        profiles:user_id (id, username, avatar_url, full_name)
+      `)
+      .eq('post_id', postId);
+    
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

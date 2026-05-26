@@ -30,7 +30,9 @@ export const postsAPI = {
         method: 'POST', 
         body: JSON.stringify({ content }) 
     }),
-    getUserPosts: (userId) => apiFetch(`/api/posts/user/${userId}`)
+    getUserPosts: (userId) => apiFetch(`/api/posts/user/${userId}`),
+    likeComment: (commentId) => apiFetch(`/api/posts/comments/${commentId}/like`, { method: 'POST' }),
+    getPostLikes: (postId) => apiFetch(`/api/posts/${postId}/likes`)
 };
 
 export const chatsAPI = {

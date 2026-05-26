@@ -4,18 +4,34 @@ import { escapeHtml, formatDate, showToast } from '../utils.js';
 import { viewUserProfile } from './profile.js';
 
 let commentsOpen = {};
+let activeReplies = {};
 
 export async function renderFeed(container) {
     try {
         const posts = await postsAPI.feed();
+        if (!posts || posts.length === 0) {
+            container.innerHTML = '<div class="card" style="text-align: center;">Нет постов. Напишите первый!</div>';
+            return;
+        }
         container.innerHTML = posts.map(post => renderPost(post)).join('');
         
-        // Привязываем обработчики
         container.querySelectorAll('.post-stat-like').forEach(btn => {
-            btn.addEventListener('click', () => toggleLike(btn.dataset.postId));
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleLike(btn.dataset.postId);
+            });
         });
         container.querySelectorAll('.post-stat-comment').forEach(btn => {
-            btn.addEventListener('click', () => toggleComments(btn.dataset.postId));
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleComments(btn.dataset.postId);
+            });
+        });
+        container.querySelectorAll('.post-stat-likes-list').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showLikesModal(btn.dataset.postId);
+            });
         });
     } catch (error) {
         console.error('Ошибка загрузки ленты:', error);
@@ -33,13 +49,16 @@ function renderPost(post) {
                     <div class="post-time">${formatDate(post.created_at)}</div>
                 </div>
             </div>
-            <div class="post-content" onclick="window.openPostModal('${post.id}')" style="cursor: pointer;">${escapeHtml(post.content)}</div>
+            <div class="post-content">${escapeHtml(post.content)}</div>
             <div class="post-stats">
                 <div class="post-stat post-stat-like ${post.liked_by_user ? 'active' : ''}" data-post-id="${post.id}">
                     ❤️ <span class="likes-count">${post.likes_count || 0}</span>
                 </div>
                 <div class="post-stat post-stat-comment" data-post-id="${post.id}">
                     💬 <span class="comments-count">${post.comments_count || 0}</span>
+                </div>
+                <div class="post-stat post-stat-likes-list" data-post-id="${post.id}" style="cursor: pointer;">
+                    👥 список
                 </div>
             </div>
             <div class="comments-section" id="comments-${post.id}" style="display: none;">
@@ -56,7 +75,6 @@ function renderPost(post) {
 async function toggleLike(postId) {
     try {
         await postsAPI.like(postId);
-        // Обновляем ленту или просто меняем состояние
         const post = document.querySelector(`.post[data-post-id="${postId}"]`);
         const likeBtn = post.querySelector('.post-stat-like');
         const likesSpan = likeBtn.querySelector('.likes-count');
@@ -89,31 +107,68 @@ async function loadComments(postId) {
         const comments = await postsAPI.getComments(postId);
         const container = document.getElementById(`comments-list-${postId}`);
         
-        if (comments.length === 0) {
+        if (!comments || comments.length === 0) {
             container.innerHTML = '<div style="color: #A1A1AA; text-align: center; padding: 20px;">Нет комментариев. Будьте первым!</div>';
         } else {
-            container.innerHTML = comments.map(comment => renderComment(comment)).join('');
+            container.innerHTML = comments.map(comment => renderComment(comment, postId)).join('');
         }
+        
+        // Привязываем обработчики лайков комментариев
+        container.querySelectorAll('.comment-like-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                likeComment(btn.dataset.commentId);
+            });
+        });
     } catch (error) {
         console.error('Ошибка загрузки комментариев:', error);
     }
 }
 
-function renderComment(comment, level = 0) {
+function renderComment(comment, postId) {
+    const replyInputId = `reply-input-${comment.id}`;
+    const repliesContainerId = `replies-${comment.id}`;
+    
     return `
-        <div class="comment" style="margin-left: ${level * 20}px;">
+        <div class="comment" data-comment-id="${comment.id}" style="margin-bottom: 16px;">
             <div class="comment-avatar" onclick="window.viewUserProfile('${comment.user_id}')" style="cursor: pointer;">${(comment.profiles?.username?.[0] || 'U').toUpperCase()}</div>
             <div style="flex: 1;">
                 <div class="comment-author" onclick="window.viewUserProfile('${comment.user_id}')" style="cursor: pointer;">${escapeHtml(comment.profiles?.username || 'Пользователь')}</div>
                 <div class="comment-content">${escapeHtml(comment.content)}</div>
-                <div style="display: flex; gap: 12px; margin-top: 8px;">
-                    <button class="comment-like-btn" data-comment-id="${comment.id}" onclick="window.likeComment('${comment.id}')" style="background: none; border: none; color: #A1A1AA; cursor: pointer; font-size: 12px;">❤️ ${comment.likes_count || 0}</button>
-                    <button class="comment-reply-btn" onclick="window.showReplyInput('${comment.id}', '${comment.id}')" style="background: none; border: none; color: #A1A1AA; cursor: pointer; font-size: 12px;">↩️ Ответить</button>
+                <div style="display: flex; gap: 16px; margin-top: 8px;">
+                    <button class="comment-like-btn" data-comment-id="${comment.id}" style="background: none; border: none; color: ${comment.liked_by_user ? '#EF4444' : '#A1A1AA'}; cursor: pointer; font-size: 12px;">❤️ ${comment.likes_count || 0}</button>
+                    <button class="comment-reply-btn" onclick="window.showReplyInput('${comment.id}', '${postId}')" style="background: none; border: none; color: #A1A1AA; cursor: pointer; font-size: 12px;">↩️ Ответить</button>
                 </div>
-                <div id="replies-${comment.id}"></div>
+                <div id="${repliesContainerId}" style="margin-left: 40px; margin-top: 12px;"></div>
+                <div id="${replyInputId}" style="display: none; margin-top: 12px;">
+                    <div class="comment-input" style="margin-top: 0;">
+                        <input type="text" placeholder="Написать ответ..." style="flex: 1;">
+                        <button class="btn-secondary" onclick="window.submitReply('${comment.id}', '${postId}')">Ответить</button>
+                    </div>
+                </div>
             </div>
         </div>
     `;
+}
+
+async function likeComment(commentId) {
+    try {
+        await postsAPI.likeComment(commentId);
+        // Обновляем отображение
+        const btn = document.querySelector(`.comment-like-btn[data-comment-id="${commentId}"]`);
+        if (btn) {
+            const currentLikes = parseInt(btn.textContent.match(/\d+/)?.[0] || 0);
+            if (btn.style.color === 'rgb(239, 68, 68)') {
+                btn.style.color = '#A1A1AA';
+                btn.innerHTML = `❤️ ${currentLikes - 1}`;
+            } else {
+                btn.style.color = '#EF4444';
+                btn.innerHTML = `❤️ ${currentLikes + 1}`;
+            }
+        }
+    } catch (error) {
+        showToast('Ошибка', 'error');
+    }
 }
 
 window.addComment = async (postId) => {
@@ -125,7 +180,6 @@ window.addComment = async (postId) => {
         await postsAPI.addComment(postId, content);
         input.value = '';
         await loadComments(postId);
-        // Обновляем счётчик
         const post = document.querySelector(`.post[data-post-id="${postId}"]`);
         const commentsSpan = post.querySelector('.comments-count');
         commentsSpan.textContent = parseInt(commentsSpan.textContent) + 1;
@@ -134,42 +188,57 @@ window.addComment = async (postId) => {
     }
 };
 
-window.likeComment = async (commentId) => {
+window.showReplyInput = (commentId, postId) => {
+    const replyDiv = document.getElementById(`reply-input-${commentId}`);
+    if (replyDiv.style.display === 'none') {
+        replyDiv.style.display = 'block';
+    } else {
+        replyDiv.style.display = 'none';
+    }
+};
+
+window.submitReply = async (parentCommentId, postId) => {
+    const replyDiv = document.getElementById(`reply-input-${parentCommentId}`);
+    const input = replyDiv.querySelector('input');
+    const content = input.value;
+    if (!content.trim()) return;
+    
     try {
-        await postsAPI.likeComment(commentId);
-        showToast('❤️ Лайк поставлен', 'success');
+        // TODO: добавить поддержку ответов на комментарии в бэкенде
+        showToast('Функция ответов на комментарии в разработке', 'info');
+        input.value = '';
+        replyDiv.style.display = 'none';
     } catch (error) {
         showToast('Ошибка', 'error');
     }
 };
 
-window.showReplyInput = (commentId, parentId) => {
-    const container = document.getElementById(`replies-${commentId}`);
-    if (container.querySelector('.reply-input-container')) {
-        container.querySelector('.reply-input-container').remove();
-        return;
+async function showLikesModal(postId) {
+    try {
+        const likes = await postsAPI.getPostLikes(postId);
+        const modal = document.getElementById('likesModal');
+        const content = document.getElementById('likesModalContent');
+        
+        if (!likes || likes.length === 0) {
+            content.innerHTML = '<div style="text-align: center; padding: 20px;">Нет лайков</div>';
+        } else {
+            content.innerHTML = likes.map(like => `
+                <div class="user-card" style="margin-bottom: 8px; cursor: pointer;" onclick="window.viewUserProfile('${like.user_id}'); document.getElementById('likesModal').classList.remove('active');">
+                    <div class="user-avatar" style="width: 40px; height: 40px;">${(like.profiles?.username?.[0] || 'U').toUpperCase()}</div>
+                    <div>
+                        <div style="font-weight: 600;">${escapeHtml(like.profiles?.username)}</div>
+                        <div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(like.profiles?.full_name || '')}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        modal.classList.add('active');
+    } catch (error) {
+        showToast('Ошибка загрузки списка лайков', 'error');
     }
-    const replyHtml = `
-        <div class="reply-input-container" style="margin-top: 8px;">
-            <div class="comment-input" style="margin-top: 0;">
-                <input type="text" id="reply-input-${commentId}" placeholder="Написать ответ...">
-                <button class="btn-secondary" onclick="window.submitReply('${commentId}', '${parentId}')">Ответить</button>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', replyHtml);
-};
+}
 
-window.submitReply = async (commentId, parentId) => {
-    const input = document.getElementById(`reply-input-${commentId}`);
-    const content = input.value;
-    if (!content.trim()) return;
-    
-    // TODO: реализовать API для ответов на комментарии
-    showToast('Функция в разработке', 'info');
-    input.value = '';
-};
-
-window.openPostModal = (postId) => {
-    showToast(`Пост ${postId} - модальное окно в разработке`, 'info');
+window.closeLikesModal = () => {
+    document.getElementById('likesModal').classList.remove('active');
 };
