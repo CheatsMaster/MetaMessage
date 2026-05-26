@@ -218,20 +218,31 @@ async function showLikesModal(postId) {
         if (!likes || likes.length === 0) {
             content.innerHTML = '<div style="text-align: center; padding: 20px;">Нет лайков</div>';
         } else {
-            content.innerHTML = likes.map(like => `
-                <div class="user-card" style="margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px;" onclick="window.viewUserProfile('${like.user_id}'); document.getElementById('likesModal').classList.remove('active');">
-                    <div class="user-avatar" style="width: 40px; height: 40px;">${(like.profiles?.username?.[0] || 'U').toUpperCase()}</div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600;">${escapeHtml(like.profiles?.username)}</div>
-                        <div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(like.profiles?.full_name || '')}</div>
+            content.innerHTML = likes.map(like => {
+                // Форматируем дату правильно
+                let dateStr = 'недавно';
+                if (like.created_at) {
+                    const date = new Date(like.created_at);
+                    if (!isNaN(date.getTime())) {
+                        dateStr = formatDate(like.created_at);
+                    }
+                }
+                return `
+                    <div class="user-card" style="margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px;" onclick="window.viewUserProfile('${like.user_id}'); document.getElementById('likesModal').classList.remove('active');">
+                        <div class="user-avatar" style="width: 40px; height: 40px;">${(like.profiles?.username?.[0] || 'U').toUpperCase()}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${escapeHtml(like.profiles?.username)}</div>
+                            <div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(like.profiles?.full_name || '')}</div>
+                        </div>
+                        <div style="font-size: 11px; color: #A1A1AA;">${dateStr}</div>
                     </div>
-                    <div style="font-size: 11px; color: #A1A1AA;">${formatDate(like.created_at)}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
         
         modal.classList.add('active');
     } catch (error) {
+        console.error('Ошибка загрузки списка лайков:', error);
         showToast('Ошибка загрузки списка лайков', 'error');
     }
 }

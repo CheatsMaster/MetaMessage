@@ -107,7 +107,7 @@ router.post('/:postId/like', authenticateToken, async (req, res) => {
     } else {
       await supabaseAdmin
         .from('post_likes')
-        .insert([{ post_id: postId, user_id: userId }]);
+        .insert([{ post_id: postId, user_id: userId, created_at: new Date() }]);
       
       res.json({ liked: true });
     }
@@ -268,9 +268,11 @@ router.get('/:postId/likes', authenticateToken, async (req, res) => {
       .from('post_likes')
       .select(`
         user_id,
+        created_at,
         profiles:user_id (id, username, avatar_url, full_name)
       `)
-      .eq('post_id', postId);
+      .eq('post_id', postId)
+      .order('created_at', { ascending: false });
     
     if (error) throw error;
     res.json(data);
