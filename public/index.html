@@ -95,6 +95,7 @@
         </div>
     </div>
 
+    <!-- Модальное окно редактирования профиля -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <h3>Редактировать профиль</h3>
@@ -109,9 +110,22 @@
         </div>
     </div>
 
+    <!-- Модальное окно просмотра профиля пользователя -->
+    <div id="userProfileModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Профиль пользователя</h3>
+                <button onclick="closeUserProfile()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div id="userProfileContent"></div>
+            <button class="btn-primary" onclick="startChatFromProfile()" style="width: 100%; margin-top: 20px;">💬 Написать сообщение</button>
+        </div>
+    </div>
+
     <script>
         let currentUser = null;
         let currentChat = null;
+        let viewedUser = null;
 
         function switchPage(pageName) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -129,13 +143,16 @@
             window.location.href = '/login.html';
         }
 
+        // ========== ПОСТЫ ==========
         async function loadFeed() {
             try {
                 const res = await fetch('/api/posts/feed');
+                if (!res.ok) throw new Error('Ошибка загрузки');
                 const posts = await res.json();
                 document.getElementById('postsFeed').innerHTML = posts.map(post => renderPost(post)).join('');
             } catch (error) {
                 console.error('Ошибка загрузки ленты:', error);
+                document.getElementById('postsFeed').innerHTML = '<div class="card">Ошибка загрузки постов</div>';
             }
         }
 
@@ -143,9 +160,9 @@
             return `
                 <div class="post" data-post-id="${post.id}">
                     <div class="post-header">
-                        <div class="post-avatar">${(post.profiles?.username?.[0] || 'U').toUpperCase()}</div>
+                        <div class="post-avatar" onclick="viewUserProfile('${post.user_id}')" style="cursor: pointer;">${(post.profiles?.username?.[0] || 'U').toUpperCase()}</div>
                         <div>
-                            <div class="post-author">${post.profiles?.username || 'Пользователь'}</div>
+                            <div class="post-author" onclick="viewUserProfile('${post.user_id}')" style="cursor: pointer;">${post.profiles?.username || 'Пользователь'}</div>
                             <div class="post-time">${new Date(post.created_at).toLocaleString()}</div>
                         </div>
                     </div>
@@ -182,6 +199,8 @@
             if (res.ok) {
                 document.getElementById('postContent').value = '';
                 loadFeed();
+            } else {
+                alert('Ошибка создания поста');
             }
         }
 
@@ -201,17 +220,30 @@
         }
 
         async function loadComments(postId) {
-            const res = await fetch(`/api/posts/${postId}/comments`);
-            const comments = await res.json();
-            document.getElementById(`comments-list-${postId}`).innerHTML = comments.map(c => `
-                <div class="comment">
-                    <div class="comment-avatar">${(c.profiles?.username?.[0] || 'U').toUpperCase()}</div>
-                    <div>
-                        <div class="comment-author">${c.profiles?.username}</div>
-                        <div class="comment-content">${escapeHtml(c.content)}</div>
-                    </div>
-                </div>
-            `).join('');
+            try {
+                const res = await fetch(`/api/posts/${postId}/comments`);
+                if (!res.ok) throw new Error('Ошибка загрузки комментариев');
+                const comments = await res.json();
+                const commentsList = document.getElementById(`comments-list-${postId}`);
+                
+                if (comments.length === 0) {
+                    commentsList.innerHTML = '<div style="color: #A1A1AA; text-align: center; padding: 20px;">Нет комментариев. Будьте первым!</div>';
+                } else {
+                    commentsList.innerHTML = comments.map(c => `
+                        <div class="comment">
+                            <div class="comment-avatar" onclick="viewUserProfile('${c.user_id}')" style="cursor: pointer;">${(c.profiles?.username?.[0] || 'U').toUpperCase()}</div>
+                            <div>
+                                <div class="comment-author" onclick="viewUserProfile('${c.user_id}')" style="cursor: pointer;">${c.profiles?.username || 'Пользователь'}</div>
+                                <div class="comment-content">${escapeHtml(c.content)}</div>
+                                <div style="font-size: 11px; color: #A1A1AA; margin-top: 4px;">${new Date(c.created_at).toLocaleString()}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки комментариев:', error);
+                document.getElementById(`comments-list-${postId}`).innerHTML = '<div style="color: red;">Ошибка загрузки комментариев</div>';
+            }
         }
 
         async function addComment(postId) {
@@ -219,77 +251,171 @@
             const content = input.value;
             if (!content.trim()) return;
             
-            await fetch(`/api/posts/${postId}/comments`, {
+            const res = await fetch(`/api/posts/${postId}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
             });
             
-            input.value = '';
-            loadComments(postId);
+            if (res.ok) {
+                input.value = '';
+                await loadComments(postId);
+                // Обновляем счетчик комментариев в посте
+                loadFeed();
+            } else {
+                alert('Ошибка отправки комментария');
+            }
         }
 
+        // ========== ПОИСК ПОЛЬЗОВАТЕЛЕЙ ==========
         async function searchUsers() {
             const query = document.getElementById('searchInput').value;
-            if (query.length < 2) return;
+            if (query.length < 2) {
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
             
-            const res = await fetch(`/api/friends/search?q=${encodeURIComponent(query)}`);
-            const users = await res.json();
-            
-            document.getElementById('searchResults').innerHTML = users.map(user => `
-                <div class="user-card">
-                    <div class="user-info">
-                        <div class="user-avatar">${(user.username?.[0] || 'U').toUpperCase()}</div>
-                        <div>
-                            <div style="font-weight: 600;">${user.username}</div>
-                            <div style="font-size: 12px; color: #A1A1AA;">${user.full_name || ''}</div>
+            try {
+                const res = await fetch(`/api/friends/search?q=${encodeURIComponent(query)}`);
+                if (!res.ok) throw new Error('Ошибка поиска');
+                const users = await res.json();
+                
+                if (users.length === 0) {
+                    document.getElementById('searchResults').innerHTML = '<div class="card" style="text-align: center;">Пользователи не найдены</div>';
+                } else {
+                    document.getElementById('searchResults').innerHTML = users.map(user => `
+                        <div class="user-card">
+                            <div class="user-info" onclick="viewUserProfile('${user.id}')" style="cursor: pointer; flex: 1;">
+                                <div class="user-avatar">${(user.username?.[0] || 'U').toUpperCase()}</div>
+                                <div>
+                                    <div style="font-weight: 600;">${escapeHtml(user.username)}</div>
+                                    <div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(user.full_name || '')}</div>
+                                    <div style="font-size: 11px; color: #A1A1AA; margin-top: 4px;">${escapeHtml(user.bio?.substring(0, 50) || '')}</div>
+                                </div>
+                            </div>
+                            <button class="btn-secondary" onclick="startChat('${user.id}')">💬 Написать</button>
                         </div>
-                    </div>
-                    <button class="btn-secondary" onclick="startChat('${user.id}')">💬 Написать</button>
-                </div>
-            `).join('');
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Ошибка поиска:', error);
+                document.getElementById('searchResults').innerHTML = '<div class="card" style="text-align: center;">Ошибка поиска</div>';
+            }
         }
 
-        async function loadChats() {
-            const res = await fetch('/api/chats');
-            const chats = await res.json();
-            document.getElementById('chatsList').innerHTML = chats.map(chat => `
-                <div class="chat-item" onclick="openChat('${chat.id}')">
-                    <div>
-                        <div style="font-weight: 600;">${chat.name || 'Личный чат'}</div>
-                        <div style="font-size: 12px; color: #A1A1AA;">${chat.last_message?.content || 'Нет сообщений'}</div>
+        // ========== ПРОСМОТР ПРОФИЛЯ ПОЛЬЗОВАТЕЛЯ ==========
+        async function viewUserProfile(userId) {
+            try {
+                const res = await fetch(`/api/users/${userId}`);
+                if (!res.ok) throw new Error('Ошибка загрузки профиля');
+                const user = await res.json();
+                viewedUser = user;
+                
+                const content = document.getElementById('userProfileContent');
+                content.innerHTML = `
+                    <div style="text-align: center;">
+                        <div class="profile-avatar" style="width: 100px; height: 100px; margin: 0 auto 20px;">${(user.username?.[0] || 'U').toUpperCase()}</div>
+                        <h2>${escapeHtml(user.username || 'Пользователь')}</h2>
+                        <div style="color: #A1A1AA; margin: 8px 0;">${escapeHtml(user.full_name || '')}</div>
+                        <div style="color: #A1A1AA; margin: 8px 0;">${escapeHtml(user.bio || 'Расскажите о себе')}</div>
+                        ${user.website ? `<div style="color: #7C3AED; margin: 8px 0;">🌐 ${escapeHtml(user.website)}</div>` : ''}
+                        <div class="status" style="margin-top: 16px;">🟢 ${user.status || 'online'}</div>
                     </div>
-                </div>
-            `).join('');
+                `;
+                
+                document.getElementById('userProfileModal').classList.add('active');
+            } catch (error) {
+                console.error('Ошибка загрузки профиля пользователя:', error);
+                alert('Не удалось загрузить профиль');
+            }
+        }
+
+        function closeUserProfile() {
+            document.getElementById('userProfileModal').classList.remove('active');
+            viewedUser = null;
+        }
+
+        async function startChatFromProfile() {
+            if (viewedUser) {
+                await startChat(viewedUser.id);
+                closeUserProfile();
+            }
+        }
+
+        // ========== ЧАТЫ ==========
+        async function loadChats() {
+            try {
+                const res = await fetch('/api/chats');
+                if (!res.ok) throw new Error('Ошибка загрузки чатов');
+                const chats = await res.json();
+                
+                if (chats.length === 0) {
+                    document.getElementById('chatsList').innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет чатов. Начните диалог через поиск!</div>';
+                } else {
+                    document.getElementById('chatsList').innerHTML = chats.map(chat => `
+                        <div class="chat-item" onclick="openChat('${chat.id}')">
+                            <div>
+                                <div style="font-weight: 600;">${escapeHtml(chat.name || 'Личный чат')}</div>
+                                <div style="font-size: 12px; color: #A1A1AA;">${escapeHtml(chat.last_message?.content || 'Нет сообщений')}</div>
+                            </div>
+                            <div style="font-size: 12px; color: #A1A1AA;">${chat.last_message ? new Date(chat.last_message.created_at).toLocaleTimeString() : ''}</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки чатов:', error);
+                document.getElementById('chatsList').innerHTML = '<div class="card" style="text-align: center;">Ошибка загрузки чатов</div>';
+            }
         }
 
         async function startChat(userId) {
-            const res = await fetch(`/api/chats/private/${userId}`, { method: 'POST' });
-            const chat = await res.json();
-            openChat(chat.id);
-            switchPage('chats');
+            try {
+                const res = await fetch(`/api/chats/private/${userId}`, { method: 'POST' });
+                if (!res.ok) throw new Error('Ошибка создания чата');
+                const chat = await res.json();
+                await openChat(chat.id);
+                switchPage('chats');
+            } catch (error) {
+                console.error('Ошибка создания чата:', error);
+                alert('Не удалось начать чат');
+            }
         }
 
         async function openChat(chatId) {
             currentChat = chatId;
             document.getElementById('chatWindow').style.display = 'block';
+            document.getElementById('chatTitle').textContent = 'Чат #' + chatId.substring(0, 8);
             await loadMessages();
+            // Обновляем список чатов
+            loadChats();
         }
 
         async function loadMessages() {
             if (!currentChat) return;
-            const res = await fetch(`/api/chats/${currentChat}/messages`);
-            const messages = await res.json();
-            const messagesDiv = document.getElementById('chatMessages');
-            messagesDiv.innerHTML = messages.map(msg => `
-                <div class="message ${msg.sender_id === currentUser?.user?.id ? 'sent' : ''}">
-                    <div class="message-bubble">
-                        <div style="font-size: 12px; margin-bottom: 4px;">${msg.profiles?.username}</div>
-                        ${escapeHtml(msg.content)}
-                    </div>
-                </div>
-            `).join('');
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            try {
+                const res = await fetch(`/api/chats/${currentChat}/messages`);
+                if (!res.ok) throw new Error('Ошибка загрузки сообщений');
+                const messages = await res.json();
+                const messagesDiv = document.getElementById('chatMessages');
+                
+                if (messages.length === 0) {
+                    messagesDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: #A1A1AA;">Нет сообщений. Напишите что-нибудь!</div>';
+                } else {
+                    messagesDiv.innerHTML = messages.map(msg => `
+                        <div class="message ${msg.sender_id === currentUser?.user?.id ? 'sent' : ''}">
+                            <div class="message-bubble">
+                                <div style="font-size: 11px; margin-bottom: 4px; color: #C084FC;">${escapeHtml(msg.profiles?.username)}</div>
+                                ${escapeHtml(msg.content)}
+                                <div style="font-size: 10px; margin-top: 4px; color: #A1A1AA;">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Ошибка загрузки сообщений:', error);
+                document.getElementById('chatMessages').innerHTML = '<div style="color: red;">Ошибка загрузки сообщений</div>';
+            }
         }
 
         async function sendMessage() {
@@ -297,26 +423,42 @@
             const content = input.value;
             if (!content.trim() || !currentChat) return;
             
-            await fetch(`/api/chats/${currentChat}/messages`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content })
-            });
-            
-            input.value = '';
-            await loadMessages();
+            try {
+                const res = await fetch(`/api/chats/${currentChat}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                
+                if (res.ok) {
+                    input.value = '';
+                    await loadMessages();
+                } else {
+                    alert('Ошибка отправки сообщения');
+                }
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                alert('Ошибка отправки сообщения');
+            }
         }
 
+        // ========== ПРОФИЛЬ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ ==========
         async function loadProfile() {
-            const res = await fetch('/api/auth/me');
-            const data = await res.json();
-            currentUser = data;
-            
-            document.getElementById('profileUsername').textContent = data.profile?.username || 'Пользователь';
-            document.getElementById('profileEmail').textContent = data.user.email;
-            document.getElementById('profileBio').textContent = data.profile?.bio || 'Расскажите о себе';
-            document.getElementById('profileAvatar').textContent = (data.profile?.username?.[0] || 'U').toUpperCase();
-            document.getElementById('userName').textContent = data.profile?.username || data.user.email.split('@')[0];
+            try {
+                const res = await fetch('/api/auth/me');
+                if (!res.ok) throw new Error('Ошибка загрузки профиля');
+                const data = await res.json();
+                currentUser = data;
+                
+                document.getElementById('profileUsername').textContent = data.profile?.username || 'Пользователь';
+                document.getElementById('profileEmail').textContent = data.user.email;
+                document.getElementById('profileBio').textContent = data.profile?.bio || 'Расскажите о себе';
+                document.getElementById('profileAvatar').textContent = (data.profile?.username?.[0] || 'U').toUpperCase();
+                document.getElementById('userName').textContent = data.profile?.username || data.user.email.split('@')[0];
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+                window.location.href = '/login.html';
+            }
         }
 
         function openEditProfile() {
@@ -339,27 +481,42 @@
                 website: document.getElementById('editWebsite').value
             };
             
-            const res = await fetch('/api/users/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            if (res.ok) {
-                closeEditProfile();
-                loadProfile();
+            try {
+                const res = await fetch('/api/users/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (res.ok) {
+                    closeEditProfile();
+                    await loadProfile();
+                    alert('Профиль успешно обновлен!');
+                } else {
+                    alert('Ошибка сохранения профиля');
+                }
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+                alert('Ошибка сохранения профиля');
             }
         }
 
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadProfile();
-            loadFeed();
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadProfile();
+            await loadFeed();
+            
+            // Загружаем чаты если мы на странице чатов
+            if (document.getElementById('chatsPage').classList.contains('active')) {
+                await loadChats();
+            }
         });
     </script>
 </body>
