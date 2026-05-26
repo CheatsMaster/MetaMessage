@@ -18,14 +18,24 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:userId', authenticateToken, async (req, res) => {
   const { userId } = req.params;
   
-  const { data, error } = await supabaseAdmin
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-  
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id, username, full_name, avatar_url, bio, website, status, created_at')
+      .eq('id', userId)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Ошибка получения профиля:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Обновить свой профиль

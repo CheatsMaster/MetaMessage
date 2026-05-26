@@ -9,45 +9,73 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    const { data, error } = await supabaseAdmin
+    const { data: participants, error: participantsError } = await supabaseAdmin
       .from('chat_participants')
-      .select(`
-        chat_id,
-        chats:chat_id (
+      .select('chat_id')
+      .eq('user_id', userId);
+    
+    if (participantsError) throw participantsError;
+    
+    if (!participants || participants.length === 0) {
+      return res.json([]);
+    }
+    
+    const chatIds = participants.map(p => p.chat_id);
+    
+    const { data: chats, error: chatsError } = await supabaseAdmin
+      .from('chats')
+      .select('*')
+      .in('id', chatIds);
+    
+    if (chatsError) throw chatsError;
+    
+    const chatsWithMessages = await Promise.all(chats.map(async (chat) => {
+      const { data: lastMessage, error: messageError } = await supabaseAdmin
+        .from('messages')
+        .select(`
           id,
-          name,
-          is_private,
+          content,
           created_at,
-          messages:messages (
-            id,
-            content,
-            created_at,
-            sender_id,
-            profiles:sender_id (id, username, avatar_url)
-          )
-        )
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { foreignTable: 'chats.messages', ascending: false });
-    
-    if (error) throw error;
-    
-    // Форматируем чаты
-    const chats = data.map(item => {
-      const chat = item.chats;
-      const lastMessage = chat.messages?.[0] || null;
+          sender_id,
+          profiles:sender_id (id, username, avatar_url)
+        `)
+        .eq('chat_id', chat.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      let chatName = chat.name;
+      if (chat.is_private && !chatName) {
+        const { data: otherParticipants } = await supabaseAdmin
+          .from('chat_participants')
+          .select('user_id')
+          .eq('chat_id', chat.id)
+          .neq('user_id', userId);
+        
+        if (otherParticipants && otherParticipants.length > 0) {
+          const { data: otherUser } = await supabaseAdmin
+            .from('profiles')
+            .select('username')
+            .eq('id', otherParticipants[0].user_id)
+            .single();
+          
+          chatName = otherUser?.username || 'Личный чат';
+        }
+      }
+      
       return {
         id: chat.id,
-        name: chat.name,
+        name: chatName || 'Чат',
         is_private: chat.is_private,
         created_at: chat.created_at,
-        last_message: lastMessage,
-        unread_count: 0 // TODO: реализовать непрочитанные
+        last_message: lastMessage || null,
+        unread_count: 0
       };
-    });
+    }));
     
-    res.json(chats);
+    res.json(chatsWithMessages);
   } catch (error) {
+    console.error('Ошибка загрузки чатов:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -57,40 +85,52 @@ router.post('/private/:userId', authenticateToken, async (req, res) => {
   const currentUserId = req.user.id;
   const { userId } = req.params;
   
+  if (currentUserId === userId) {
+    return res.status(400).json({ error: 'Нельзя создать чат с самим собой' });
+  }
+  
   try {
-    // Проверяем, существует ли уже чат между этими пользователями
-    const { data: existingChat, error: findError } = await supabaseAdmin
+    const { data: existingChats, error: findError } = await supabaseAdmin
       .from('chat_participants')
       .select('chat_id')
-      .eq('user_id', currentUserId)
-      .in('chat_id', 
-        supabaseAdmin
-          .from('chat_participants')
-          .select('chat_id')
-          .eq('user_id', userId)
-      );
+      .eq('user_id', currentUserId);
     
-    if (existingChat && existingChat.length > 0) {
-      // Чат уже существует
+    if (findError) throw findError;
+    
+    let commonChat = null;
+    
+    if (existingChats && existingChats.length > 0) {
+      const chatIds = existingChats.map(c => c.chat_id);
+      
+      const { data: otherParticipants } = await supabaseAdmin
+        .from('chat_participants')
+        .select('chat_id')
+        .eq('user_id', userId)
+        .in('chat_id', chatIds);
+      
+      if (otherParticipants && otherParticipants.length > 0) {
+        commonChat = otherParticipants[0].chat_id;
+      }
+    }
+    
+    if (commonChat) {
       const { data: chat } = await supabaseAdmin
         .from('chats')
         .select('*')
-        .eq('id', existingChat[0].chat_id)
+        .eq('id', commonChat)
         .single();
       
       return res.json(chat);
     }
     
-    // Создаем новый чат
     const { data: newChat, error: chatError } = await supabaseAdmin
       .from('chats')
-      .insert([{ is_private: true }])
+      .insert([{ is_private: true, name: null }])
       .select()
       .single();
     
     if (chatError) throw chatError;
     
-    // Добавляем участников
     await supabaseAdmin
       .from('chat_participants')
       .insert([
@@ -100,6 +140,7 @@ router.post('/private/:userId', authenticateToken, async (req, res) => {
     
     res.json(newChat);
   } catch (error) {
+    console.error('Ошибка создания чата:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -110,21 +151,32 @@ router.post('/:chatId/messages', authenticateToken, async (req, res) => {
   const { content } = req.body;
   const userId = req.user.id;
   
-  if (!content) {
+  if (!content || !content.trim()) {
     return res.status(400).json({ error: 'Сообщение не может быть пустым' });
   }
   
   try {
+    const { data: participant, error: participantError } = await supabaseAdmin
+      .from('chat_participants')
+      .select('*')
+      .eq('chat_id', chatId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (participantError || !participant) {
+      return res.status(403).json({ error: 'Вы не участник этого чата' });
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('messages')
       .insert([{
         chat_id: chatId,
         sender_id: userId,
-        content
+        content: content.trim()
       }])
       .select(`
         *,
-        profiles:sender_id (id, username, avatar_url)
+        profiles:sender_id (id, username, avatar_url, full_name)
       `)
       .single();
     
@@ -132,6 +184,7 @@ router.post('/:chatId/messages', authenticateToken, async (req, res) => {
     
     res.status(201).json(data);
   } catch (error) {
+    console.error('Ошибка отправки сообщения:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -145,7 +198,7 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
       .from('messages')
       .select(`
         *,
-        profiles:sender_id (id, username, avatar_url)
+        profiles:sender_id (id, username, avatar_url, full_name)
       `)
       .eq('chat_id', chatId)
       .order('created_at', { ascending: true });
@@ -154,6 +207,7 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
     
     res.json(data);
   } catch (error) {
+    console.error('Ошибка загрузки сообщений:', error);
     res.status(500).json({ error: error.message });
   }
 });

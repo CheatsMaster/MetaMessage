@@ -4,35 +4,51 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Получить ленту постов (с друзьями и свои)
+// Получить ленту постов
 router.get('/feed', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Получаем посты от пользователя и его друзей
-    const { data, error } = await supabaseAdmin
+    const { data: posts, error: postsError } = await supabaseAdmin
       .from('posts')
       .select(`
         *,
-        profiles:user_id (id, username, avatar_url, full_name),
-        post_likes (user_id),
-        post_comments (id, content, user_id, profiles:user_id (username))
+        profiles:user_id (id, username, avatar_url, full_name)
       `)
       .order('created_at', { ascending: false })
       .limit(50);
     
-    if (error) throw error;
+    if (postsError) throw postsError;
     
-    // Добавляем флаг likedByCurrentUser
-    const postsWithLikeInfo = data.map(post => ({
-      ...post,
-      liked_by_user: post.post_likes?.some(like => like.user_id === userId) || false,
-      likes_count: post.post_likes?.length || 0,
-      comments_count: post.post_comments?.length || 0
+    const postsWithStats = await Promise.all(posts.map(async (post) => {
+      const { count: likesCount } = await supabaseAdmin
+        .from('post_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+      
+      const { data: userLike } = await supabaseAdmin
+        .from('post_likes')
+        .select('*')
+        .eq('post_id', post.id)
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      const { count: commentsCount } = await supabaseAdmin
+        .from('post_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+      
+      return {
+        ...post,
+        likes_count: likesCount || 0,
+        comments_count: commentsCount || 0,
+        liked_by_user: !!userLike
+      };
     }));
     
-    res.json(postsWithLikeInfo);
+    res.json(postsWithStats);
   } catch (error) {
+    console.error('Ошибка загрузки ленты:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -73,34 +89,25 @@ router.post('/:postId/like', authenticateToken, async (req, res) => {
   const userId = req.user.id;
   
   try {
-    // Проверяем, есть ли уже лайк
     const { data: existingLike } = await supabaseAdmin
       .from('post_likes')
       .select('*')
       .eq('post_id', postId)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
     
     if (existingLike) {
-      // Убираем лайк
       await supabaseAdmin
         .from('post_likes')
         .delete()
         .eq('post_id', postId)
         .eq('user_id', userId);
       
-      // Обновляем счетчик
-      await supabaseAdmin.rpc('decrement_post_likes', { post_id: postId });
-      
       res.json({ liked: false });
     } else {
-      // Добавляем лайк
       await supabaseAdmin
         .from('post_likes')
         .insert([{ post_id: postId, user_id: userId }]);
-      
-      // Обновляем счетчик
-      await supabaseAdmin.rpc('increment_post_likes', { post_id: postId });
       
       res.json({ liked: true });
     }
@@ -114,7 +121,7 @@ router.post('/:postId/comments', authenticateToken, async (req, res) => {
   const { postId } = req.params;
   const { content } = req.body;
   
-  if (!content) {
+  if (!content || !content.trim()) {
     return res.status(400).json({ error: 'Комментарий не может быть пустым' });
   }
   
@@ -124,7 +131,7 @@ router.post('/:postId/comments', authenticateToken, async (req, res) => {
       .insert([{
         post_id: postId,
         user_id: req.user.id,
-        content
+        content: content.trim()
       }])
       .select(`
         *,
@@ -134,10 +141,28 @@ router.post('/:postId/comments', authenticateToken, async (req, res) => {
     
     if (error) throw error;
     
-    // Обновляем счетчик комментариев
-    await supabaseAdmin.rpc('increment_post_comments', { post_id: postId });
-    
     res.status(201).json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Получить комментарии к посту
+router.get('/:postId/comments', authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('post_comments')
+      .select(`
+        *,
+        profiles:user_id (id, username, avatar_url, full_name)
+      `)
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
