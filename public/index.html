@@ -355,19 +355,19 @@
             
             const content = document.getElementById('userProfileContent');
             content.innerHTML = `
-                <div class="vk-profile-header">
-                    <div class="vk-cover"></div>
-                    <div class="vk-avatar-large">${(user.username?.[0] || 'U').toUpperCase()}</div>
-                    <div class="vk-profile-info">
-                        <div class="vk-profile-name">${escapeHtml(user.username || 'Пользователь')}</div>
-                        <div class="vk-profile-bio">${escapeHtml(user.bio || 'Расскажите о себе')}</div>
+                <div style="position: relative; margin-bottom: 24px;">
+                    <div style="height: 200px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 24px 24px 0 0;"></div>
+                    <div style="position: absolute; bottom: -50px; left: 24px; width: 120px; height: 120px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 50%; border: 4px solid #1A1A1A; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700;">${(user.username?.[0] || 'U').toUpperCase()}</div>
+                    <div style="padding: 60px 24px 24px; background: rgba(36, 36, 36, 0.8); border-radius: 0 0 24px 24px;">
+                        <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">${escapeHtml(user.username || 'Пользователь')}</div>
+                        <div style="color: #A1A1AA; margin: 12px 0; line-height: 1.6;">${escapeHtml(user.bio || 'Расскажите о себе')}</div>
                         ${user.website ? `<div style="color: #7C3AED; margin: 8px 0;">🌐 ${escapeHtml(user.website)}</div>` : ''}
-                        <div class="vk-profile-stats">
-                            <div class="vk-stat"><div class="vk-stat-number" id="userPostsCount">0</div><div class="vk-stat-label">записей</div></div>
-                            <div class="vk-stat"><div class="vk-stat-number" id="userSubscribersCount">0</div><div class="vk-stat-label">подписчиков</div></div>
-                            <div class="vk-stat"><div class="vk-stat-number" id="userSubscriptionsCount">0</div><div class="vk-stat-label">подписок</div></div>
+                        <div style="display: flex; gap: 24px; margin: 16px 0; padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="userPostsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">записей</div></div>
+                            <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;">0</div><div style="font-size: 12px; color: #A1A1AA;">подписчиков</div></div>
+                            <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;">0</div><div style="font-size: 12px; color: #A1A1AA;">подписок</div></div>
                         </div>
-                        <div class="vk-action-buttons">
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
                             ${!isOwnProfile ? `
                                 <button class="btn-primary" id="messageFromProfileBtn">💬 Сообщение</button>
                                 <button class="btn-secondary" onclick="subscribeUser('${user.id}')">👥 Подписаться</button>
@@ -377,9 +377,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="profile-tabs">
-                    <button class="profile-tab active" onclick="switchProfileTab('posts', '${user.id}')">📝 Записи</button>
-                    <button class="profile-tab" onclick="switchProfileTab('photos', '${user.id}')">📸 Фото</button>
+                <div style="display: flex; gap: 8px; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 60px; margin: 24px 0;">
+                    <button class="profile-tab active" onclick="switchProfileTab('posts', '${user.id}')" style="flex: 1; padding: 10px; background: transparent; border: none; color: #A1A1AA; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 60px; transition: all 0.3s;">📝 Записи</button>
+                    <button class="profile-tab" onclick="switchProfileTab('photos', '${user.id}')" style="flex: 1; padding: 10px; background: transparent; border: none; color: #A1A1AA; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 60px; transition: all 0.3s;">📸 Фото</button>
                 </div>
                 <div id="userPostsContainer"></div>
             `;
@@ -403,6 +403,7 @@
                 const postsContainer = document.getElementById('userPostsContainer');
                 const wallForm = document.createElement('div');
                 wallForm.className = 'card wall-post-form';
+                wallForm.style.marginBottom = '24px';
                 wallForm.innerHTML = `
                     <textarea id="wallPostContent" class="post-input" rows="2" placeholder="Написать на стену ${escapeHtml(user.username)}..."></textarea>
                     <div class="post-actions"><button class="btn-primary" onclick="createWallPost()">📝 Отправить</button></div>
@@ -457,26 +458,26 @@
             
             const container = document.getElementById('myProfileContainer');
             container.innerHTML = `
-                <div class="vk-profile-header">
-                    <div class="vk-cover"></div>
-                    <div class="vk-avatar-large">${(currentUser?.profile?.username?.[0] || 'U').toUpperCase()}</div>
-                    <div class="vk-profile-info">
-                        <div class="vk-profile-name">${escapeHtml(currentUser?.profile?.username || 'Пользователь')}</div>
-                        <div class="vk-profile-bio">${escapeHtml(currentUser?.profile?.bio || 'Расскажите о себе')}</div>
+                <div style="position: relative; margin-bottom: 24px;">
+                    <div style="height: 200px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 24px 24px 0 0;"></div>
+                    <div style="position: absolute; bottom: -50px; left: 24px; width: 120px; height: 120px; background: linear-gradient(135deg, #7C3AED, #A78BFA); border-radius: 50%; border: 4px solid #1A1A1A; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700;">${(currentUser?.profile?.username?.[0] || 'U').toUpperCase()}</div>
+                    <div style="padding: 60px 24px 24px; background: rgba(36, 36, 36, 0.8); border-radius: 0 0 24px 24px;">
+                        <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">${escapeHtml(currentUser?.profile?.username || 'Пользователь')}</div>
+                        <div style="color: #A1A1AA; margin: 12px 0; line-height: 1.6;">${escapeHtml(currentUser?.profile?.bio || 'Расскажите о себе')}</div>
                         ${currentUser?.profile?.website ? `<div style="color: #7C3AED; margin: 8px 0;">🌐 ${escapeHtml(currentUser?.profile?.website)}</div>` : ''}
-                        <div class="vk-profile-stats">
-                            <div class="vk-stat"><div class="vk-stat-number" id="myPostsCount">0</div><div class="vk-stat-label">записей</div></div>
-                            <div class="vk-stat"><div class="vk-stat-number" id="mySubscribersCount">0</div><div class="vk-stat-label">подписчиков</div></div>
-                            <div class="vk-stat"><div class="vk-stat-number" id="mySubscriptionsCount">0</div><div class="vk-stat-label">подписок</div></div>
+                        <div style="display: flex; gap: 24px; margin: 16px 0; padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;" id="myPostsCount">0</div><div style="font-size: 12px; color: #A1A1AA;">записей</div></div>
+                            <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;">0</div><div style="font-size: 12px; color: #A1A1AA;">подписчиков</div></div>
+                            <div style="text-align: center;"><div style="font-size: 18px; font-weight: 700; color: #7C3AED;">0</div><div style="font-size: 12px; color: #A1A1AA;">подписок</div></div>
                         </div>
-                        <div class="vk-action-buttons">
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
                             <button class="btn-secondary" onclick="openEditProfile()">✏️ Редактировать профиль</button>
                         </div>
                     </div>
                 </div>
-                <div class="profile-tabs">
-                    <button class="profile-tab active" onclick="switchMyProfileTab('posts')">📝 Мои записи</button>
-                    <button class="profile-tab" onclick="switchMyProfileTab('photos')">📸 Фото</button>
+                <div style="display: flex; gap: 8px; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 60px; margin: 24px 0;">
+                    <button class="profile-tab active" onclick="switchMyProfileTab('posts')" style="flex: 1; padding: 10px; background: transparent; border: none; color: #A1A1AA; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 60px; transition: all 0.3s;">📝 Мои записи</button>
+                    <button class="profile-tab" onclick="switchMyProfileTab('photos')" style="flex: 1; padding: 10px; background: transparent; border: none; color: #A1A1AA; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 60px; transition: all 0.3s;">📸 Фото</button>
                 </div>
                 <div id="myPostsContainer"></div>
             `;
