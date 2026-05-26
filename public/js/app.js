@@ -59,8 +59,9 @@ window.switchPage = async (pageName) => {
             document.getElementById('searchResults').innerHTML = '';
         } else if (pageName === 'profile') {
             await renderMyProfile(document.getElementById('myProfileContainer'));
+        } else if (pageName === 'settings') {
+            await renderSettings(document.getElementById('settingsContainer'));
         }
-        // Убираем settings из switchPage - настройки теперь только через профиль
     } catch (error) {
         console.error('Ошибка загрузки страницы:', error);
     }
@@ -110,10 +111,6 @@ async function init() {
         console.error('❌ Детали ошибки:', error.message);
         console.error('❌ Полный объект ошибки:', error);
         
-        // Временно убираем редирект, чтобы увидеть ошибку
-        // window.location.href = '/login.html';
-        
-        // Показываем ошибку на странице
         const feedContainer = document.getElementById('postsFeed');
         if (feedContainer) {
             feedContainer.innerHTML = `<div class="card" style="text-align: center; color: #EF4444;">
