@@ -77,13 +77,15 @@ window.openSettings = () => {
 };
 
 async function init() {
+    console.log('🔍 Проверка авторизации...');
     try {
         const data = await authAPI.me();
+        console.log('✅ Пользователь авторизован:', data);
         setState({ currentUser: data });
         document.getElementById('userName').textContent = data.profile?.username || data.user.email.split('@')[0];
         await renderFeed(document.getElementById('postsFeed'));
     } catch (error) {
-        console.error('Ошибка загрузки профиля:', error);
+        console.error('❌ Ошибка авторизации:', error);
         window.location.href = '/login.html';
     }
 }

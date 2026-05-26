@@ -1,5 +1,4 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabaseAdmin } from '../supabaseClient.js';
 
@@ -17,7 +16,7 @@ router.post('/register', async (req, res) => {
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // для тестов, в проде отправляй подтверждение
+      email_confirm: true,
       user_metadata: { username },
     });
 
@@ -47,22 +46,25 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // ВАЖНО: правильные настройки куки для localhost
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: false,        // Для localhost обязательно false
+      sameSite: 'lax',      // Меняем с strict на lax
       maxAge: 7 * 24 * 3600000,
+      path: '/'
     });
 
     res.json({ message: 'Login successful', user: data.user });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(401).json({ error: 'Invalid credentials' });
   }
 });
 
 // Логаут
 router.post('/logout', (req, res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', { path: '/' });
   res.json({ message: 'Logged out' });
 });
 

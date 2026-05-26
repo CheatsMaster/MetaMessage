@@ -393,11 +393,9 @@
         const API_URL = window.location.origin;
         
         function switchTab(tab) {
-            // Обновляем активную вкладку
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
             
-            // Показываем нужную форму
             const loginForm = document.getElementById('loginForm');
             const registerForm = document.getElementById('registerForm');
             
@@ -409,7 +407,6 @@
                 registerForm.classList.add('active');
             }
             
-            // Очищаем сообщения
             document.getElementById('message').innerHTML = '';
         }
         
@@ -434,6 +431,7 @@
                 const response = await fetch(`${API_URL}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',  // ВАЖНО: добавляем credentials
                     body: JSON.stringify({ email, password })
                 });
                 
@@ -443,11 +441,12 @@
                     showMessage('✅ Успешный вход! Перенаправление...', 'success');
                     setTimeout(() => {
                         window.location.href = '/';
-                    }, 1500);
+                    }, 500);
                 } else {
                     showMessage(data.error || 'Ошибка входа', 'error');
                 }
             } catch (error) {
+                console.error('Ошибка:', error);
                 showMessage('Ошибка соединения с сервером', 'error');
             } finally {
                 btn.classList.remove('loading');
@@ -496,28 +495,6 @@
                 btn.textContent = 'Создать аккаунт';
             }
         }
-        
-        // Проверяем, авторизован ли пользователь
-        async function checkAuth() {
-            try {
-                const response = await fetch(`${API_URL}/api/auth/me`, {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Уже авторизован:', data.user);
-                    // Можно перенаправить на главную страницу чата
-                    // window.location.href = '/chat.html';
-                }
-            } catch (error) {
-                console.log('Не авторизован');
-            }
-        }
-        
-        // Запускаем проверку при загрузке
-        checkAuth();
     </script>
 </body>
 </html>

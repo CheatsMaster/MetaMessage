@@ -3,7 +3,7 @@ const API_URL = '';
 export async function apiFetch(endpoint, options = {}) {
     const res = await fetch(`${API_URL}${endpoint}`, {
         ...options,
-        credentials: 'include',
+        credentials: 'include',  // ВАЖНО: добавляем credentials для кук
         headers: { 'Content-Type': 'application/json', ...options.headers }
     });
     if (!res.ok) {
